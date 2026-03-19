@@ -1,0 +1,14 @@
+// pages/Inventory.jsx
+import React from "react";
+
+const Inventory = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-gray-900">
+        This is Inventory Page
+      </h1>
+    </div>
+  );
+};
+
+export default Inventory;

@@ -1,4 +1,4 @@
-// App.jsx
+// App.jsx - Updated with public store routes
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "@/pages/Home";
@@ -14,7 +14,10 @@ import Sales from "@/pages/Sales";
 import Inventory from "@/pages/Inventory";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
-import PublicStore from "@/pages/PublicStore"; // Import the new page
+
+// Public Store Imports
+import PublicStoreLogin from "@/public-store/Login";
+import PublicStoreHome from "@/public-store/Home";
 
 const App = () => {
   return (
@@ -28,8 +31,11 @@ const App = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/register" element={<SignUp />} />
           <Route path="/login" element={<SignIn />} />
-          <Route path="/public-store" element={<PublicStore />} />{" "}
-          {/* New public route */}
+          
+          {/* Public Store Routes */}
+          <Route path="/public-store/login" element={<PublicStoreLogin />} />
+          <Route path="/public-store/home" element={<PublicStoreHome />} />
+          
           {/* Protected routes */}
           <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />

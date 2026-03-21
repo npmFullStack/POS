@@ -128,7 +128,7 @@ const ProtectedLayout = () => {
       <div className="flex pt-16">
         {/* Sidebar - Desktop */}
         <aside
-          className={`hidden md:block bg-secondary transition-all duration-300 ${
+          className={`hidden md:block bg-white transition-all duration-300 ${
             isSidebarOpen ? "w-64" : "w-20"
           }`}
           style={{
@@ -212,17 +212,17 @@ const ProtectedLayout = () => {
           </nav>
         </aside>
 
-        {/* Mobile Sidebar - Full Height Drawer from Top */}
+        {/* Mobile Sidebar - Full Height Drawer with Animation */}
         {isMobileMenuOpen && (
           <>
-            {/* Overlay */}
+            {/* Overlay with fade animation */}
             <div
-              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+              className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40 animate-in fade-in duration-300"
               onClick={() => setIsMobileMenuOpen(false)}
             />
 
-            {/* Drawer - Full height from top with X icon */}
-            <aside className="md:hidden fixed top-0 left-0 right-0 bottom-0 bg-white z-50 overflow-y-auto">
+            {/* Drawer - Slide in from right animation */}
+            <aside className="md:hidden fixed top-0 right-0 bottom-0 w-80 bg-white z-50 overflow-y-auto animate-in slide-in-from-right duration-300 ease-out shadow-xl">
               {/* X icon at top right */}
               <button
                 onClick={() => setIsMobileMenuOpen(false)}

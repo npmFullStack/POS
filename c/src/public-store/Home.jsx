@@ -262,18 +262,19 @@ const Home = () => {
                     <p className="text-gray-500">No products found matching your search.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-4">
-                    {filteredProducts.map(product => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        onAddToCart={handleAddToCart}
-                        onScan={() => {
-                          setShowScanner(true);
-                        }}
-                      />
-                    ))}
-                  </div>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4 pb-4">
+  {filteredProducts.map(product => (
+    <ProductCard
+      key={product.id}
+      product={product}
+      onAddToCart={handleAddToCart}
+      onScan={() => {
+        setShowScanner(true);
+      }}
+    />
+  ))}
+</div>
                 )}
               </div>
             </div>

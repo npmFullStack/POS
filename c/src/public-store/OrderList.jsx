@@ -1,9 +1,10 @@
 // public-store/OrderList.jsx
 import React, { useState } from "react";
-import { Trash2, Minus, Plus, Search, X } from "lucide-react";
+import { Trash2, Minus, Plus, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 
 const OrderList = ({ orders, onUpdateQuantity, onRemoveItem }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const calculateTotal = () => {
     return orders.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -16,13 +17,52 @@ const OrderList = ({ orders, onUpdateQuantity, onRemoveItem }) => {
     (item.barcode && item.barcode.includes(searchTerm))
   );
 
+  // When minimized, show only the header and total
+  if (isMinimized) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden sticky top-0">
+        {/* Minimized Header */}
+        <div 
+          className="p-3 border-b border-gray-100 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+          onClick={() => setIsMinimized(false)}
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-gray-900">Current Order</h2>
+              <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                {orders.length} item(s)
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-lg font-bold text-primary">
+                ₱{calculateTotal().toLocaleString()}
+              </span>
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col" style={{ height: "calc(100vh - 180px)" }}>
-      {/* Header with Title and Search - Fixed */}
+      {/* Header with Title, Search and Minimize Button - Fixed */}
       <div className="flex-shrink-0 p-3 border-b border-gray-100 bg-gray-50">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="font-semibold text-gray-900">Current Order</h2>
-          <span className="text-xs text-gray-500">{orders.length} item(s)</span>
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-gray-900">Current Order</h2>
+            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+              {orders.length} item(s)
+            </span>
+          </div>
+          <button
+            onClick={() => setIsMinimized(true)}
+            className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
+            title="Minimize"
+          >
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          </button>
         </div>
         
         {/* Search Bar */}
@@ -65,10 +105,11 @@ const OrderList = ({ orders, onUpdateQuantity, onRemoveItem }) => {
         ) : (
           <div className="divide-y divide-gray-100">
             {filteredOrders.map((item) => (
-              <div key={item.id} className="p-3 hover:bg-gray-50 transition-colors">
-                <div className="flex gap-2">
+              <div key={item.id} className="p-2 hover:bg-gray-50 transition-colors">
+                {/* One-line layout */}
+                <div className="flex items-center gap-2">
                   {/* Compact Product Image */}
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
                     {item.image ? (
                       <img 
                         src={item.image} 
@@ -76,68 +117,62 @@ const OrderList = ({ orders, onUpdateQuantity, onRemoveItem }) => {
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/40?text=Product";
+                          e.target.src = "https://via.placeholder.com/32?text=Product";
                         }}
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                        <span className="text-gray-400 text-[10px]">No img</span>
+                        <span className="text-gray-400 text-[8px]">No img</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Product Details */}
+                  {/* Product Name and Price */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 text-sm truncate">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          #{item.id}
-                          {item.barcode && ` | ${item.barcode}`}
-                        </p>
-                        <p className="text-primary font-semibold text-xs mt-0.5">
-                          ₱{item.price.toLocaleString()}
-                        </p>
-                      </div>
-                      
-                      {/* Item Total */}
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900 text-sm">
-                          ₱{(item.price * item.quantity).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Quantity Controls */}
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                          className="p-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <Minus className="w-3 h-3 text-gray-600" />
-                        </button>
-                        <span className="text-sm text-gray-700 w-8 text-center font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                          className="p-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <Plus className="w-3 h-3 text-gray-600" />
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => onRemoveItem(item.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-1"
-                        title="Remove item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-gray-900 text-sm truncate">
+                        {item.name}
+                      </h3>
+                      <span className="text-xs text-gray-500 flex-shrink-0">
+                        ₱{item.price}
+                      </span>
                     </div>
                   </div>
+                  
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                      className="p-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <Minus className="w-3 h-3 text-gray-600" />
+                    </button>
+                    <span className="text-sm text-gray-700 w-6 text-center font-medium">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      className="p-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                      <Plus className="w-3 h-3 text-gray-600" />
+                    </button>
+                  </div>
+                  
+                  {/* Item Total */}
+                  <div className="text-right min-w-[60px] flex-shrink-0">
+                    <p className="font-semibold text-gray-900 text-sm">
+                      ₱{(item.price * item.quantity).toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* Remove Button */}
+                  <button
+                    onClick={() => onRemoveItem(item.id)}
+                    className="text-red-500 hover:text-red-700 transition-colors p-1 flex-shrink-0"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}

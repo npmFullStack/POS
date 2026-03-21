@@ -3,6 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { User, LogOut, ShoppingBag, Settings } from "lucide-react";
 import logo from "@/assets/images/logo.svg";
+import shopLogo from "@/assets/images/shop.png"; // Import shop.png
 
 const Header = ({ cartItemCount = 0, onCartClick }) => {
   const navigate = useNavigate();
@@ -16,28 +17,28 @@ const Header = ({ cartItemCount = 0, onCartClick }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="bg-white shadow-sm sticky top-0 z-50 font-poppins">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <Link to="/public-store/home" className="flex items-center gap-3">
             <img 
-              src="/shop.png" 
+              src={shopLogo} 
               alt="Store" 
               className="w-10 h-10 object-contain"
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/40?text=Store";
-              }}
             />
-            <span className="text-xl font-bold text-gray-900">POS System</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-gray-900">Nors</span>
+              <span className="text-xs font-semibold text-gray-500 tracking-wider">POS SYSTEM</span>
+            </div>
           </Link>
 
-          {/* Powered by SukiPRO */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
+          {/* Powered by SukiPRO - styled like components/Header */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5">
             <img src={logo} alt="SukiPRO" className="w-5 h-5" />
             <span className="text-xs text-gray-600">
-              Powered by <span className="font-semibold text-primary">SukiPRO</span>
+              Powered by <span className="font-bold text-primary">Suki</span>
+              <span className="font-bold text-black">PRO</span>
             </span>
           </div>
 
@@ -91,11 +92,14 @@ const Header = ({ cartItemCount = 0, onCartClick }) => {
           </div>
         </div>
 
-        {/* Mobile Powered by SukiPRO */}
+        {/* Mobile Powered by SukiPRO - styled like components/Header */}
         <div className="md:hidden flex items-center justify-center gap-2 py-2 border-t border-gray-100">
-          <img src={logo} alt="SukiPRO" className="w-4 h-4" />
+
           <span className="text-xs text-gray-500">
-            Powered by <span className="font-semibold text-primary">SukiPRO</span>
+            Powered by 
+                      <img src={logo} alt="SukiPRO" className="w-4 h-4" />
+            <span className="font-bold text-primary">Suki</span>
+            <span className="font-bold text-black">PRO</span>
           </span>
         </div>
       </div>

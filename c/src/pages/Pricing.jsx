@@ -42,7 +42,7 @@ const Pricing = () => {
     {
       id: "premium",
       name: "Premium",
-      price: 250,
+      price: 150,
       period: "per month",
       description:
         "For growing businesses that need more power and flexibility",
@@ -264,7 +264,7 @@ const Pricing = () => {
               <div className="p-4 text-center bg-primary/5">
                 <span className="text-sm font-bold text-primary">Premium</span>
                 <div className="text-xs text-primary/60 mt-0.5">
-                  ₱250 / month
+                  ₱150 / month
                 </div>
               </div>
             </div>

@@ -271,7 +271,7 @@ const Home = () => {
                     <p className="text-sm text-gray-500">No products found matching your search.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 pb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 pb-4">
                     {filteredProducts.map(product => (
                       <ProductCard
                         key={product.id}

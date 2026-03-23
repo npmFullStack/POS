@@ -4,12 +4,12 @@ import { X, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
 import ModalPortal from '@/components/ModalPortal';
 import Button from '@/components/Button';
 
-// Import images (you'll need to add these images to your assets/images folder)
-import addStockImg from '@/assets/images/addStock.png';
+import instructionsImg from '@/assets/images/instructions.png';
+import addStockImg from '@/assets/images/newProduct.png';
 import importProductImg from '@/assets/images/importProduct.png';
 import newCategoryImg from '@/assets/images/newCategory.png';
 import newProductImg from '@/assets/images/newProduct.png';
-import instructionsImg from '@/assets/images/instructions.png';
+
 
 const Help = ({ isOpen, onClose }) => {
   const [currentSlide, setCurrentSlide] = useState(0);

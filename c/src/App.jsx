@@ -9,10 +9,10 @@ import SignUp from "@/pages/SignUp";
 import SignIn from "@/pages/SignIn";
 import ProtectedLayout from "@/components/ProtectedLayout";
 import Dashboard from "@/pages/Dashboard";
-import Shop from "@/pages/Shop";
 import Sales from "@/pages/Sales";
 import Inventory from "@/pages/Inventory";
 import Reports from "@/pages/Reports";
+import Staff from "@/pages/Staff";
 import Settings from "@/pages/Settings";
 
 // Public Store Imports
@@ -39,10 +39,10 @@ const App = () => {
           {/* Protected routes */}
           <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/shop" element={<Shop />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/reports" element={<Reports />} />
+                        <Route path="/staffs" element={<Staff />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

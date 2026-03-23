@@ -11,6 +11,7 @@ import {
   LogOut,
   Store,
   User,
+Users,
   X,
 } from "lucide-react";
 import shopImage from "@/assets/images/shop.png";
@@ -30,9 +31,10 @@ const ProtectedLayout = () => {
 
   const navLinks = [
     { id: 1, name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { id: 2, name: "My Shop", path: "/shop", icon: Store },
-    { id: 3, name: "Sales", path: "/sales", icon: ShoppingCart },
-    { id: 4, name: "Inventory", path: "/inventory", icon: Package },
+    { id: 2, name: "Sales", path: "/sales", icon: ShoppingCart },
+    { id: 3, name: "Inventory", path: "/inventory", icon: Package },
+
+        { id: 4, name: "Staff", path: "/staffs", icon: Users },
     { id: 5, name: "Reports", path: "/reports", icon: BarChart3 },
     { id: 6, name: "Settings", path: "/settings", icon: Settings },
   ];

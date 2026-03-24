@@ -50,8 +50,8 @@ const Inventory = () => {
       sku: "SNK-001",
       barcode: "4800012345678",
       category: "Junk Food",
-      price: 89.00,
-      cost: 65.00,
+      price: 89.0,
+      cost: 65.0,
       stock: 50,
       lowStockThreshold: 10,
       unit: "piece",
@@ -65,8 +65,8 @@ const Inventory = () => {
       sku: "SNK-002",
       barcode: "4800012345679",
       category: "Junk Food",
-      price: 149.00,
-      cost: 110.00,
+      price: 149.0,
+      cost: 110.0,
       stock: 35,
       lowStockThreshold: 10,
       unit: "piece",
@@ -80,8 +80,8 @@ const Inventory = () => {
       sku: "SNK-003",
       barcode: "4800012345680",
       category: "Junk Food",
-      price: 79.00,
-      cost: 55.00,
+      price: 79.0,
+      cost: 55.0,
       stock: 45,
       lowStockThreshold: 10,
       unit: "piece",
@@ -95,8 +95,8 @@ const Inventory = () => {
       sku: "BEV-001",
       barcode: "4800012345682",
       category: "Beverages",
-      price: 85.00,
-      cost: 60.00,
+      price: 85.0,
+      cost: 60.0,
       stock: 60,
       lowStockThreshold: 15,
       unit: "bottle",
@@ -110,8 +110,8 @@ const Inventory = () => {
       sku: "BEV-002",
       barcode: "4800012345683",
       category: "Beverages",
-      price: 85.00,
-      cost: 60.00,
+      price: 85.0,
+      cost: 60.0,
       stock: 55,
       lowStockThreshold: 15,
       unit: "bottle",
@@ -125,8 +125,8 @@ const Inventory = () => {
       sku: "BEV-003",
       barcode: "4800012345686",
       category: "Beverages",
-      price: 80.00,
-      cost: 55.00,
+      price: 80.0,
+      cost: 55.0,
       stock: 8,
       lowStockThreshold: 15,
       unit: "bottle",
@@ -140,8 +140,8 @@ const Inventory = () => {
       sku: "SNK-004",
       barcode: "4800012345684",
       category: "Junk Food",
-      price: 69.00,
-      cost: 48.00,
+      price: 69.0,
+      cost: 48.0,
       stock: 3,
       lowStockThreshold: 10,
       unit: "piece",
@@ -159,11 +159,11 @@ const Inventory = () => {
     { id: 4, name: "Instant Noodles", productCount: 0, status: "active" },
   ]);
 
-  const categoriesList = ["all", ...categories.map(c => c.name)];
-  
-  const categoryOptions = categoriesList.map(cat => ({
+  const categoriesList = ["all", ...categories.map((c) => c.name)];
+
+  const categoryOptions = categoriesList.map((cat) => ({
     value: cat,
-    label: cat === "all" ? "All Categories" : cat
+    label: cat === "all" ? "All Categories" : cat,
   }));
 
   const stats = [
@@ -178,7 +178,7 @@ const Inventory = () => {
     {
       id: 2,
       title: "Low Stock Items",
-      value: products.filter(p => p.stock <= p.lowStockThreshold).length,
+      value: products.filter((p) => p.stock <= p.lowStockThreshold).length,
       change: "Needs attention",
       changeType: "warning",
       icon: AlertCircle,
@@ -187,7 +187,7 @@ const Inventory = () => {
     {
       id: 3,
       title: "Categories",
-      value: categories.filter(c => c.status === "active").length,
+      value: categories.filter((c) => c.status === "active").length,
       change: "+2 new",
       changeType: "increase",
       icon: Layers,
@@ -195,37 +195,41 @@ const Inventory = () => {
     {
       id: 4,
       title: "Total Value",
-      value: `₱${products.reduce((sum, p) => sum + (p.price * p.stock), 0).toLocaleString()}`,
+      value: `₱${products.reduce((sum, p) => sum + p.price * p.stock, 0).toLocaleString()}`,
       change: "Current valuation",
       changeType: "neutral",
       icon: DollarSign,
     },
   ];
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.barcode.includes(searchTerm);
-    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.barcode.includes(searchTerm);
+    const matchesCategory =
+      selectedCategory === "all" || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
   const handleImportFile = (file) => {
     console.log("Importing file:", file);
-    alert(`Importing ${file.name}... This would parse the Excel file and add products.`);
+    alert(
+      `Importing ${file.name}... This would parse the Excel file and add products.`,
+    );
   };
 
   const handleSelectAll = () => {
     if (selectedProducts.length === filteredProducts.length) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectedProducts(filteredProducts.map((p) => p.id));
     }
   };
 
   const handleSelectProduct = (productId) => {
     if (selectedProducts.includes(productId)) {
-      setSelectedProducts(selectedProducts.filter(id => id !== productId));
+      setSelectedProducts(selectedProducts.filter((id) => id !== productId));
     } else {
       setSelectedProducts([...selectedProducts, productId]);
     }
@@ -233,18 +237,18 @@ const Inventory = () => {
 
   const handleBulkDelete = () => {
     if (confirm(`Delete ${selectedProducts.length} products?`)) {
-      setProducts(products.filter(p => !selectedProducts.includes(p.id)));
+      setProducts(products.filter((p) => !selectedProducts.includes(p.id)));
       setSelectedProducts([]);
     }
   };
-  
+
   const handleEditProduct = (product) => {
     console.log("Edit product:", product);
   };
-  
+
   const handleDeleteProduct = (productId) => {
     if (confirm("Delete this product?")) {
-      setProducts(products.filter(p => p.id !== productId));
+      setProducts(products.filter((p) => p.id !== productId));
     }
     setOpenDropdownId(null);
   };
@@ -256,15 +260,17 @@ const Inventory = () => {
   };
 
   const handleAddStockSubmit = (stockData) => {
-    setProducts(products.map(product => {
-      if (product.id === stockData.productId) {
-        return {
-          ...product,
-          stock: product.stock + stockData.quantity
-        };
-      }
-      return product;
-    }));
+    setProducts(
+      products.map((product) => {
+        if (product.id === stockData.productId) {
+          return {
+            ...product,
+            stock: product.stock + stockData.quantity,
+          };
+        }
+        return product;
+      }),
+    );
     console.log("Stock added:", stockData);
   };
 
@@ -275,7 +281,7 @@ const Inventory = () => {
   const handleCreateCategory = (newCategory) => {
     setCategories([...categories, newCategory]);
   };
-  
+
   // Close dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event) => {
@@ -289,74 +295,35 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
+      {/* Header Section - Help button now beside page title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Inventory Management</h1>
-          <p className="text-gray-500 mt-1">Track stock levels, monitor product performance, and manage your entire inventory in one place</p>
-        </div>
-        <div className="flex gap-3">
-          {/* New Dropdown Button */}
-          <div className="relative">
-            <Button
-              variant="primary"
-              icon={<Plus className="w-5 h-5" />}
-              onClick={() => setShowNewDropdown(!showNewDropdown)}
-            >
-              New
-              <ChevronDown className="w-4 h-4" />
-            </Button>
-            {showNewDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-200 z-20">
-                <button
-                  onClick={() => {
-                    setShowProductModal(true);
-                    setShowNewDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <Package className="w-4 h-4" />
-                  Product
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCategoryModal(true);
-                    setShowNewDropdown(false);
-                  }}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <Layers className="w-4 h-4" />
-                  Category
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Inventory Management
+          </h1>
           <Button
-            variant="outline"
-            icon={<Upload className="w-5 h-5" />}
-            onClick={() => setShowImportModal(true)}
-          >
-            Import
-          </Button>
-          <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             icon={<HelpCircle className="w-5 h-5" />}
             onClick={() => setShowHelpModal(true)}
-          >
-            Help
-          </Button>
+            className="!p-2 hover:bg-gray-100 rounded-full"
+          />
         </div>
+        <p className="text-gray-500 mt-1 sm:mt-0">
+          Track stock levels, monitor product performance, and manage your
+          entire inventory in one place
+        </p>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Modern with gradient and no emojis */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <StatCard key={stat.id} stat={stat} />
         ))}
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+      {/* Search and Filter Bar - No border or bg color */}
+      <div className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -419,7 +386,11 @@ const Inventory = () => {
               <div className="relative">
                 <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
                   {product.image ? (
-                    <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <Package className="w-12 h-12 text-gray-400" />
                   )}
@@ -435,20 +406,22 @@ const Inventory = () => {
                   onChange={() => handleSelectProduct(product.id)}
                   className="absolute top-2 left-2 w-4 h-4 rounded border-gray-300 focus:ring-primary"
                 />
-                
+
                 {/* Dropdown Menu */}
                 <div className="absolute top-2 right-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setOpenDropdownId(openDropdownId === product.id ? null : product.id);
+                      setOpenDropdownId(
+                        openDropdownId === product.id ? null : product.id,
+                      );
                     }}
                     className="bg-white rounded-lg p-1.5 shadow-sm hover:bg-gray-50 transition-colors"
                   >
                     <MoreVertical className="w-4 h-4 text-gray-600" />
                   </button>
                   {openDropdownId === product.id && (
-                    <div 
+                    <div
                       ref={dropdownRef}
                       className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
                     >
@@ -480,14 +453,16 @@ const Inventory = () => {
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
+                    <h3 className="font-semibold text-gray-900 truncate">
+                      {product.name}
+                    </h3>
                     <p className="text-xs text-gray-500">{product.sku}</p>
                   </div>
                   <span className="text-xs bg-gray-100 px-2 py-1 rounded ml-2 whitespace-nowrap max-w-[100px] truncate">
                     {product.category}
                   </span>
                 </div>
-                
+
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Cost Price:</span>
@@ -495,17 +470,29 @@ const Inventory = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Selling Price:</span>
-                    <span className="text-xl font-bold text-primary">₱{product.price}</span>
+                    <span className="text-xl font-bold text-primary">
+                      ₱{product.price}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">Profit:</span>
-                    <span className="text-emerald-600 font-medium">₱{(product.price - product.cost).toFixed(2)}</span>
+                    <span className="text-emerald-600 font-medium">
+                      ₱{(product.price - product.cost).toFixed(2)}
+                    </span>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                   <div>
-                    <p className="text-sm text-gray-600">Stock: <span className={`font-medium ${product.stock <= product.lowStockThreshold ? "text-red-600" : "text-gray-900"}`}>{product.stock}</span> {product.unit}s</p>
+                    <p className="text-sm text-gray-600">
+                      Stock:{" "}
+                      <span
+                        className={`font-medium ${product.stock <= product.lowStockThreshold ? "text-red-600" : "text-gray-900"}`}
+                      >
+                        {product.stock}
+                      </span>{" "}
+                      {product.unit}s
+                    </p>
                   </div>
                   <button
                     onClick={() => handleAddStock(product)}
@@ -528,24 +515,46 @@ const Inventory = () => {
                   <th className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                      checked={
+                        selectedProducts.length === filteredProducts.length &&
+                        filteredProducts.length > 0
+                      }
                       onChange={handleSelectAll}
                       className="w-4 h-4 rounded border-gray-300"
                     />
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">SKU/Barcode</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Product
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    SKU/Barcode
+                  </th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cost
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Profit
+                  </th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stock
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                  <tr
+                    key={product.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
@@ -556,8 +565,12 @@ const Inventory = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="font-medium text-gray-900">{product.name}</p>
-                        <p className="text-xs text-gray-500">{product.barcode}</p>
+                        <p className="font-medium text-gray-900">
+                          {product.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {product.barcode}
+                        </p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -578,7 +591,9 @@ const Inventory = () => {
                       ₱{(product.price - product.cost).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}>
+                      <span
+                        className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}
+                      >
                         {product.stock} {product.unit}s
                       </span>
                     </td>
@@ -593,13 +608,19 @@ const Inventory = () => {
                         </button>
                         <div className="relative">
                           <button
-                            onClick={() => setOpenDropdownId(openDropdownId === product.id ? null : product.id)}
+                            onClick={() =>
+                              setOpenDropdownId(
+                                openDropdownId === product.id
+                                  ? null
+                                  : product.id,
+                              )
+                            }
                             className="p-1.5 hover:bg-gray-100 rounded-lg"
                           >
                             <MoreVertical className="w-4 h-4 text-gray-500" />
                           </button>
                           {openDropdownId === product.id && (
-                            <div 
+                            <div
                               ref={dropdownRef}
                               className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
                             >
@@ -668,10 +689,7 @@ const Inventory = () => {
         onClose={() => setShowImportModal(false)}
         onImport={handleImportFile}
       />
-      <Help
-        isOpen={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
-      />
+      <Help isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
     </div>
   );
 };

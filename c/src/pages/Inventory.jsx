@@ -175,7 +175,7 @@ const Inventory = () => {
   const stats = [
     {
       id: 1,
-      title: "Total Products",
+      title: "TOTAL PRODUCTS",
       value: products.length,
       change: "+12% vs last month",
       changeType: "increase",
@@ -184,7 +184,7 @@ const Inventory = () => {
     },
     {
       id: 2,
-      title: "Low Stock Items",
+      title: "LOW STOCK ITEMS",
       value: products.filter((p) => p.stock <= p.lowStockThreshold).length,
       change: "Needs attention",
       changeType: "warning",
@@ -194,7 +194,7 @@ const Inventory = () => {
     },
     {
       id: 3,
-      title: "Categories",
+      title: "CATEGORIES",
       value: categories.filter((c) => c.status === "active").length,
       change: "+2 new",
       changeType: "increase",
@@ -202,7 +202,7 @@ const Inventory = () => {
     },
     {
       id: 4,
-      title: "Total Value",
+      title: "TOTAL VALUE",
       value: `₱${products.reduce((sum, p) => sum + p.price * p.stock, 0).toLocaleString()}`,
       change: "Current valuation",
       changeType: "neutral",

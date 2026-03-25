@@ -18,6 +18,7 @@ import Settings from "@/pages/Settings";
 // Public Store Imports
 import PublicStoreLogin from "@/public-store/Login";
 import PublicStoreHome from "@/public-store/Home";
+import ImportProduct from "@/pages/ImportProduct";
 
 const App = () => {
   return (
@@ -31,18 +32,19 @@ const App = () => {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/register" element={<SignUp />} />
           <Route path="/login" element={<SignIn />} />
-          
+
           {/* Public Store Routes */}
           <Route path="/public-store/login" element={<PublicStoreLogin />} />
           <Route path="/public-store/home" element={<PublicStoreHome />} />
-          
+
           {/* Protected routes */}
           <Route element={<ProtectedLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/inventory/import" element={<ImportProduct />} />
             <Route path="/reports" element={<Reports />} />
-                        <Route path="/staffs" element={<Staff />} />
+            <Route path="/staffs" element={<Staff />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Routes>

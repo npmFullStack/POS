@@ -1,5 +1,6 @@
 // pages/Inventory.jsx
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   Plus,
@@ -16,13 +17,13 @@ import {
   HelpCircle,
   AlertTriangle,
 } from "lucide-react";
+
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 import AddStock from "@/components/modals/AddStock";
 import NewCategory from "@/components/modals/NewCategory";
 import NewProduct from "@/components/modals/NewProduct";
-import ImportProduct from "@/components/modals/ImportProduct";
 import Help from "@/components/modals/Help";
 import PesoSign from "@/assets/icons/PesoSign";
 
@@ -31,11 +32,11 @@ import instructionsImg from "@/assets/images/instructions.png";
 import emptyImg from "@/assets/images/empty.png";
 
 const Inventory = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showNewDropdown, setShowNewDropdown] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
@@ -43,7 +44,6 @@ const Inventory = () => {
   const [selectedProductForStock, setSelectedProductForStock] = useState(null);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const fileInputRef = useRef(null);
   const dropdownRef = useRef(null);
 
   // Sample Products Data
@@ -275,13 +275,6 @@ const Inventory = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleImportFile = (file) => {
-    console.log("Importing file:", file);
-    alert(
-      `Importing ${file.name}... This would parse the Excel file and add products.`,
-    );
-  };
-
   const handleSelectAll = () => {
     if (selectedProducts.length === filteredProducts.length) {
       setSelectedProducts([]);
@@ -411,7 +404,7 @@ const Inventory = () => {
           <Button
             variant="outline"
             icon={<Upload className="w-5 h-5" />}
-            onClick={() => setShowImportModal(true)}
+            onClick={() => navigate("/inventory/import")}
           >
             Import
           </Button>
@@ -807,11 +800,6 @@ const Inventory = () => {
         onClose={() => setShowAddStockModal(false)}
         product={selectedProductForStock}
         onAddStock={handleAddStockSubmit}
-      />
-      <ImportProduct
-        isOpen={showImportModal}
-        onClose={() => setShowImportModal(false)}
-        onImport={handleImportFile}
       />
       <Help
         isOpen={showHelpModal}

@@ -1,6 +1,15 @@
 // components/modals/NewProduct.jsx
-import React, { useState } from "react";
-import { X, Package, Barcode, Tag, Box, AlertCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import {
+  X,
+  Package,
+  Barcode,
+  Tag,
+  Box,
+  AlertCircle,
+  Upload,
+  Image as ImageIcon,
+} from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import ModalPortal from "@/components/ModalPortal";
@@ -16,7 +25,11 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
     stock: "",
     lowStockThreshold: "10",
     unit: "piece",
+    image: null,
+    imagePreview: null,
   });
+
+  const fileInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -39,6 +52,32 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          image: file,
+          imagePreview: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image: null,
+      imagePreview: null,
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const newProduct = {
@@ -50,7 +89,8 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
       lowStockThreshold: parseInt(formData.lowStockThreshold),
       status: "active",
       createdAt: new Date().toISOString().split("T")[0],
-      image: null,
+      // For image, we store the preview or you can handle actual upload separately
+      image: formData.imagePreview,
     };
     onCreateProduct(newProduct);
     onClose();
@@ -65,13 +105,16 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
       stock: "",
       lowStockThreshold: "10",
       unit: "piece",
+      image: null,
+      imagePreview: null,
     });
   };
 
   return (
     <ModalPortal>
       <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Changed max-w-2xl to max-w-lg for smaller width */}
+        <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
           {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-100 p-5 flex justify-between items-center z-10">
             <div>
@@ -92,6 +135,62 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="p-5 space-y-5">
+            {/* Product Image Upload */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                Product Image
+              </h3>
+              <div className="flex items-start gap-4">
+                {/* Image Preview Area */}
+                <div className="flex-shrink-0">
+                  {formData.imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={formData.imagePreview}
+                        alt="Product preview"
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <ImageIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload Button */}
+                <div className="flex-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="product-image-upload"
+                  />
+                  <label
+                    htmlFor="product-image-upload"
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors w-fit"
+                  >
+                    <Upload className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {formData.image ? "Change Image" : "Upload Image"}
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Recommended: Square image, max 2MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Basic Information */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3">

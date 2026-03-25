@@ -124,17 +124,13 @@ const StatCard = ({ stat }) => {
             </p>
           </div>
 
-          {/* Right side - Icon */}
-          <div
-            className={`p-1.5 rounded-lg ${
-              isWarning ? "bg-red-50" : "bg-gray-50"
-            } group-hover:scale-110 transition-transform duration-200`}
-          >
+          {/* Right side - Icon - Made bigger and bolder, no background color */}
+          <div className="group-hover:scale-110 transition-transform duration-200">
             <Icon
-              className={`w-4 h-4 ${
+              className={`w-8 h-8 ${
                 isWarning ? "text-red-600" : "text-primary"
               }`}
-              strokeWidth={1.5}
+              strokeWidth={2.5}
             />
           </div>
         </div>

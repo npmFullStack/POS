@@ -13,11 +13,18 @@ import {
   AlertCircle,
   HelpCircle,
   MoreVertical,
+  Filter,
+  Eye,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 import Help from "@/components/modals/Help";
+
+// Import help images
+import instructionsImg from "@/assets/images/instructions.png";
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,6 +112,8 @@ const Staff = () => {
         staffData.filter((s) => s.status === "inactive").length +
         " inactive staff",
       icon: XCircle,
+      alert: true,
+      alertMessage: "Inactive staff members need attention",
     },
     {
       id: 4,
@@ -160,36 +169,58 @@ const Staff = () => {
     setOpenDropdownId(null);
   };
 
+  // Simplified help slides for Staff Management page - all icons use bg-primary and text-white
   const helpSlides = [
     {
       id: 1,
       title: "Welcome to Staff Management",
       description:
-        "Learn how to efficiently manage your team members, track their status, and control access permissions.",
-      image: null,
+        "Manage your team members, track their status, and control access permissions all in one place.",
+      image: instructionsImg,
       alt: "Instructions",
+      isImage: true,
     },
     {
       id: 2,
-      title: "Adding Staff Members",
+      title: "Add Staff Members",
       description:
-        "Easily add new staff members by clicking the 'Add Staff Member' button. Fill in their details and assign appropriate roles.",
-      image: null,
-      alt: "Add Staff",
+        "Click the 'Add Staff Member' button to invite new team members. Fill in their details and send invitation emails.",
+      icon: UserPlus,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
     {
       id: 3,
+      title: "Search & Filter",
+      description:
+        "Use the search bar to find staff by name or email. Filter by status to quickly see active, inactive, or pending staff members.",
+      icon: Search,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
+    },
+    {
+      id: 4,
       title: "Staff Status Indicators",
       description:
-        "Track staff availability with status indicators: Green for active, Gray for inactive, and Yellow for pending invites.",
-      image: null,
-      alt: "Status Indicators",
+        "Status badges show staff availability: Green for active, Gray for inactive, and Yellow for pending invites.",
+      icon: UserCheck,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
+    },
+    {
+      id: 5,
+      title: "Edit & Delete Staff",
+      description:
+        "Click the three dots menu to edit staff information or remove team members from your organization.",
+      icon: Edit,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header Section - Help button beside page title */}
+      {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
@@ -243,7 +274,7 @@ const Staff = () => {
           </div>
         </div>
 
-        {/* Staff Table with ellipsis on text overflow */}
+        {/* Staff Table */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
@@ -281,9 +312,14 @@ const Staff = () => {
                           <p className="font-medium text-gray-900 truncate max-w-[150px]">
                             {staff.name}
                           </p>
-                          {/* Green indicator for active staff */}
                           {staff.status === "active" && (
                             <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                          )}
+                          {staff.status === "inactive" && (
+                            <div className="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0" />
+                          )}
+                          {staff.status === "pending" && (
+                            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0" />
                           )}
                         </div>
                         <p className="text-xs text-gray-500 truncate max-w-[180px]">
@@ -369,7 +405,7 @@ const Staff = () => {
         )}
       </div>
 
-      {/* Help Modal with slides like Inventory.jsx */}
+      {/* Help Modal with slides - All icons use bg-primary and text-white */}
       <Help
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}

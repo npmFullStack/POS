@@ -4,7 +4,6 @@ import { X, Package, Barcode, Tag, Box, AlertCircle } from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import ModalPortal from "@/components/ModalPortal";
-import PesoSign from "@/assets/icons/PesoSign.svg";
 
 const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
   const [formData, setFormData] = useState({
@@ -73,7 +72,7 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
     <ModalPortal>
       <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-          {/* Header - Removed icon */}
+          {/* Header */}
           <div className="sticky top-0 bg-white border-b border-gray-100 p-5 flex justify-between items-center z-10">
             <div>
               <h2 className="text-lg font-bold text-gray-900">
@@ -174,17 +173,15 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
                     Cost Price
                   </label>
                   <div className="relative">
-                    <img
-                      src={PesoSign}
-                      alt="₱"
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      ₱
+                    </span>
                     <input
                       type="number"
                       name="cost"
                       value={formData.cost}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
+                      className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
                       placeholder="0.00"
                       step="0.01"
                     />
@@ -195,17 +192,15 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
                     Selling Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <img
-                      src={PesoSign}
-                      alt="₱"
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-                    />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                      ₱
+                    </span>
                     <input
                       type="number"
                       name="price"
                       value={formData.price}
                       onChange={handleChange}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
+                      className="w-full pl-7 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
                       placeholder="0.00"
                       step="0.01"
                       required
@@ -275,12 +270,21 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
               </p>
             </div>
 
-            {/* Actions */}
+            {/* Actions - disabled button when form is incomplete */}
             <div className="sticky bottom-0 bg-white border-t border-gray-100 p-5 -mx-5 px-5 flex justify-end gap-3 mt-5">
               <Button variant="outline" onClick={onClose} type="button">
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={
+                  !formData.name ||
+                  !formData.sku ||
+                  !formData.category ||
+                  !formData.price
+                }
+              >
                 Save Product
               </Button>
             </div>

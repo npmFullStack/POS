@@ -27,14 +27,22 @@ const NewCategory = ({ isOpen, onClose, onCreateCategory }) => {
     <ModalPortal>
       <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-          {/* Header with subheading */}
-          <div className="p-5 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900">
-              Create New Category
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Organize your products by category
-            </p>
+          {/* Header with X button */}
+          <div className="p-5 border-b border-gray-100 flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                Create New Category
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Organize your products by category
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
 
           {/* Form */}

@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Layers,
   HelpCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
@@ -23,14 +24,10 @@ import NewCategory from "@/components/modals/NewCategory";
 import NewProduct from "@/components/modals/NewProduct";
 import ImportProduct from "@/components/modals/ImportProduct";
 import Help from "@/components/modals/Help";
+import PesoSign from "@/assets/icons/PesoSign";
 
 // Import images locally
 import instructionsImg from "@/assets/images/instructions.png";
-import addStockImg from "@/assets/images/newProduct.png";
-import importProductImg from "@/assets/images/importProduct.png";
-import newCategoryImg from "@/assets/images/newCategory.png";
-import newProductImg from "@/assets/images/newProduct.png";
-import PesoSign from "@/assets/icons/PesoSign.svg";
 
 const Inventory = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -188,7 +185,7 @@ const Inventory = () => {
       value: products.filter((p) => p.stock <= p.lowStockThreshold).length,
       change: "Needs attention",
       changeType: "warning",
-      icon: AlertCircle,
+      icon: AlertTriangle,
       alert: true,
       totalStock: products.length,
     },
@@ -206,7 +203,7 @@ const Inventory = () => {
       value: `₱${products.reduce((sum, p) => sum + p.price * p.stock, 0).toLocaleString()}`,
       change: "Current valuation",
       changeType: "neutral",
-      icon: () => <img src={PesoSign} alt="Peso" className="w-4 h-4" />,
+      icon: PesoSign,
     },
   ];
 
@@ -218,38 +215,52 @@ const Inventory = () => {
         "Learn how to efficiently manage your products, track stock levels, and optimize your inventory with our comprehensive system.",
       image: instructionsImg,
       alt: "Instructions",
+      isImage: true,
     },
     {
       id: 2,
       title: "Adding Stock Made Easy",
       description:
         "Quickly add stock to any product with our intuitive interface. Simply click 'Add Stock' and enter the quantity to update inventory instantly.",
-      image: addStockImg,
-      alt: "Add Stock",
+      icon: Plus,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
     {
       id: 3,
       title: "Bulk Import Products",
       description:
         "Save time by importing multiple products at once using Excel or CSV files. Our system will automatically validate and add your products.",
-      image: importProductImg,
-      alt: "Import Products",
+      icon: Upload,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
     {
       id: 4,
       title: "Organize with Categories",
       description:
         "Create custom categories to better organize your products. Filter, sort, and manage products more efficiently with proper categorization.",
-      image: newCategoryImg,
-      alt: "New Category",
+      icon: Layers,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
     {
       id: 5,
       title: "Add New Products",
       description:
         "Add individual products with detailed information including name, SKU, pricing, and stock levels. Set low stock thresholds for alerts.",
-      image: newProductImg,
-      alt: "New Product",
+      icon: Package,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
+    },
+    {
+      id: 6,
+      title: "Low Stock Alerts",
+      description:
+        "Products with stock below the threshold will show a red warning badge. Use the Add Stock button to replenish inventory quickly.",
+      icon: AlertTriangle,
+      iconColor: "text-white",
+      bgColor: "bg-primary",
     },
   ];
 
@@ -487,7 +498,8 @@ const Inventory = () => {
                   )}
                 </div>
                 {product.stock <= product.lowStockThreshold && (
-                  <span className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  <span className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" />
                     Low Stock
                   </span>
                 )}
@@ -682,11 +694,16 @@ const Inventory = () => {
                       ₱{(product.price - product.cost).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span
-                        className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}
-                      >
-                        {product.stock} {product.unit}s
-                      </span>
+                      <div className="flex items-center justify-end gap-1">
+                        {product.stock <= product.lowStockThreshold && (
+                          <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                        )}
+                        <span
+                          className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}
+                        >
+                          {product.stock} {product.unit}s
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="relative flex justify-center gap-2">

@@ -16,6 +16,7 @@ import {
   Layers,
   HelpCircle,
   AlertTriangle,
+  Ruler,
 } from "lucide-react";
 
 import Button from "@/components/Button";
@@ -24,6 +25,7 @@ import StatCard from "@/components/StatCard";
 import AddStock from "@/components/modals/AddStock";
 import NewCategory from "@/components/modals/NewCategory";
 import NewProduct from "@/components/modals/NewProduct";
+import NewUnit from "@/components/modals/NewUnit";
 import Help from "@/components/modals/Help";
 import PesoSign from "@/assets/icons/PesoSign";
 
@@ -39,6 +41,7 @@ const Inventory = () => {
   const [showNewDropdown, setShowNewDropdown] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showUnitModal, setShowUnitModal] = useState(false);
   const [showAddStockModal, setShowAddStockModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [selectedProductForStock, setSelectedProductForStock] = useState(null);
@@ -54,11 +57,11 @@ const Inventory = () => {
       sku: "SNK-001",
       barcode: "4800012345678",
       category: "Junk Food",
+      unit: "piece",
       price: 89.0,
       cost: 65.0,
       stock: 50,
       lowStockThreshold: 10,
-      unit: "piece",
       image: null,
       status: "active",
       createdAt: "2024-01-15",
@@ -69,11 +72,11 @@ const Inventory = () => {
       sku: "SNK-002",
       barcode: "4800012345679",
       category: "Junk Food",
+      unit: "piece",
       price: 149.0,
       cost: 110.0,
       stock: 35,
       lowStockThreshold: 10,
-      unit: "piece",
       image: null,
       status: "active",
       createdAt: "2024-01-15",
@@ -84,11 +87,11 @@ const Inventory = () => {
       sku: "SNK-003",
       barcode: "4800012345680",
       category: "Junk Food",
+      unit: "piece",
       price: 79.0,
       cost: 55.0,
       stock: 45,
       lowStockThreshold: 10,
-      unit: "piece",
       image: null,
       status: "active",
       createdAt: "2024-01-20",
@@ -99,11 +102,11 @@ const Inventory = () => {
       sku: "BEV-001",
       barcode: "4800012345682",
       category: "Beverages",
+      unit: "bottle",
       price: 85.0,
       cost: 60.0,
       stock: 60,
       lowStockThreshold: 15,
-      unit: "bottle",
       image: null,
       status: "active",
       createdAt: "2024-01-15",
@@ -114,11 +117,11 @@ const Inventory = () => {
       sku: "BEV-002",
       barcode: "4800012345683",
       category: "Beverages",
+      unit: "bottle",
       price: 85.0,
       cost: 60.0,
       stock: 55,
       lowStockThreshold: 15,
-      unit: "bottle",
       image: null,
       status: "active",
       createdAt: "2024-01-15",
@@ -129,11 +132,11 @@ const Inventory = () => {
       sku: "BEV-003",
       barcode: "4800012345686",
       category: "Beverages",
+      unit: "bottle",
       price: 80.0,
       cost: 55.0,
       stock: 8,
       lowStockThreshold: 15,
-      unit: "bottle",
       image: null,
       status: "active",
       createdAt: "2024-02-01",
@@ -144,11 +147,11 @@ const Inventory = () => {
       sku: "SNK-004",
       barcode: "4800012345684",
       category: "Junk Food",
+      unit: "piece",
       price: 69.0,
       cost: 48.0,
       stock: 3,
       lowStockThreshold: 10,
-      unit: "piece",
       image: null,
       status: "active",
       createdAt: "2024-02-10",
@@ -161,6 +164,45 @@ const Inventory = () => {
     { id: 2, name: "Beverages", productCount: 3, status: "active" },
     { id: 3, name: "Canned Goods", productCount: 0, status: "active" },
     { id: 4, name: "Instant Noodles", productCount: 0, status: "active" },
+  ]);
+
+  // Units Data
+  const [units, setUnits] = useState([
+    {
+      id: 1,
+      name: "Piece",
+      abbreviation: "pc",
+      productCount: 5,
+      status: "active",
+    },
+    {
+      id: 2,
+      name: "Bottle",
+      abbreviation: "btl",
+      productCount: 3,
+      status: "active",
+    },
+    {
+      id: 3,
+      name: "Kilogram",
+      abbreviation: "kg",
+      productCount: 0,
+      status: "active",
+    },
+    {
+      id: 4,
+      name: "Liter",
+      abbreviation: "L",
+      productCount: 0,
+      status: "active",
+    },
+    {
+      id: 5,
+      name: "Box",
+      abbreviation: "bx",
+      productCount: 0,
+      status: "active",
+    },
   ]);
 
   const categoriesList = ["all", ...categories.map((c) => c.name)];
@@ -338,6 +380,10 @@ const Inventory = () => {
     setCategories([...categories, newCategory]);
   };
 
+  const handleCreateUnit = (newUnit) => {
+    setUnits([...units, newUnit]);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -397,6 +443,16 @@ const Inventory = () => {
                 >
                   <Layers className="w-4 h-4" />
                   Category
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUnitModal(true);
+                    setShowNewDropdown(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors flex items-center gap-2"
+                >
+                  <Ruler className="w-4 h-4" />
+                  Unit
                 </button>
               </div>
             )}
@@ -788,12 +844,18 @@ const Inventory = () => {
         isOpen={showProductModal}
         onClose={() => setShowProductModal(false)}
         categories={categories}
+        units={units}
         onCreateProduct={handleCreateProduct}
       />
       <NewCategory
         isOpen={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
         onCreateCategory={handleCreateCategory}
+      />
+      <NewUnit
+        isOpen={showUnitModal}
+        onClose={() => setShowUnitModal(false)}
+        onCreateUnit={handleCreateUnit}
       />
       <AddStock
         isOpen={showAddStockModal}

@@ -28,6 +28,7 @@ import PesoSign from "@/assets/icons/PesoSign";
 
 // Import images locally
 import instructionsImg from "@/assets/images/instructions.png";
+import emptyImg from "@/assets/images/empty.png";
 
 const Inventory = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -478,298 +479,313 @@ const Inventory = () => {
       )}
 
       {/* Products Grid/List View */}
-      {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 overflow-hidden group"
-            >
-              <div className="relative">
-                <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Package className="w-12 h-12 text-gray-400" />
-                  )}
-                </div>
-                {product.stock <= product.lowStockThreshold && (
-                  <span className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    Low Stock
-                  </span>
-                )}
-                <input
-                  type="checkbox"
-                  checked={selectedProducts.includes(product.id)}
-                  onChange={() => handleSelectProduct(product.id)}
-                  className="absolute top-2 left-2 w-4 h-4 rounded border-gray-300 focus:ring-primary"
-                />
-
-                {/* Dropdown Menu */}
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenDropdownId(
-                        openDropdownId === product.id ? null : product.id,
-                      );
-                    }}
-                    className="bg-white rounded-lg p-1.5 shadow-sm hover:bg-gray-50 transition-colors"
-                  >
-                    <MoreVertical className="w-4 h-4 text-gray-600" />
-                  </button>
-                  {openDropdownId === product.id && (
-                    <div
-                      ref={dropdownRef}
-                      className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
-                    >
-                      <button
-                        onClick={() => handleAddStock(product)}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-emerald-600" />
-                        Add Stock
-                      </button>
-                      <button
-                        onClick={() => handleEditProduct(product)}
-                        className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
-                        className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 truncate">
-                      {product.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">{product.sku}</p>
-                  </div>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded ml-2 whitespace-nowrap max-w-[100px] truncate">
-                    {product.category}
-                  </span>
-                </div>
-
-                <div className="mt-3 space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Cost Price:</span>
-                    <span className="text-gray-600">₱{product.cost}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-500">Selling Price:</span>
-                    <span className="text-xl font-bold text-primary">
-                      ₱{product.price}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Profit:</span>
-                    <span className="text-emerald-600 font-medium">
-                      ₱{(product.price - product.cost).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                  <div>
-                    <p className="text-sm text-gray-600">
-                      Stock:{" "}
-                      <span
-                        className={`font-medium ${product.stock <= product.lowStockThreshold ? "text-red-600" : "text-gray-900"}`}
-                      >
-                        {product.stock}
-                      </span>{" "}
-                      {product.unit}s
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleAddStock(product)}
-                    className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add Stock
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedProducts.length === filteredProducts.length &&
-                        filteredProducts.length > 0
-                      }
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 rounded border-gray-300"
-                    />
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SKU/Barcode
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cost
-                  </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Profit
-                  </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredProducts.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => handleSelectProduct(product.id)}
-                        className="w-4 h-4 rounded border-gray-300"
+      {filteredProducts.length > 0 ? (
+        viewMode === "grid" ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 overflow-hidden group"
+              >
+                <div className="relative">
+                  <div className="h-40 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover"
                       />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {product.barcode}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-gray-600">{product.sku}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs bg-gray-100 px-2 py-1 rounded max-w-[120px] truncate inline-block">
-                        {product.category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-600">
-                      ₱{product.cost}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-primary">
-                      ₱{product.price}
-                    </td>
-                    <td className="px-4 py-3 text-right text-emerald-600">
-                      ₱{(product.price - product.cost).toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {product.stock <= product.lowStockThreshold && (
-                          <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
-                        )}
-                        <span
-                          className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}
-                        >
-                          {product.stock} {product.unit}s
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <div className="relative flex justify-center gap-2">
+                    ) : (
+                      <Package className="w-12 h-12 text-gray-400" />
+                    )}
+                  </div>
+                  {product.stock <= product.lowStockThreshold && (
+                    <span className="absolute bottom-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      Low Stock
+                    </span>
+                  )}
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.includes(product.id)}
+                    onChange={() => handleSelectProduct(product.id)}
+                    className="absolute top-2 left-2 w-4 h-4 rounded border-gray-300 focus:ring-primary"
+                  />
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute top-2 right-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdownId(
+                          openDropdownId === product.id ? null : product.id,
+                        );
+                      }}
+                      className="bg-white rounded-lg p-1.5 shadow-sm hover:bg-gray-50 transition-colors"
+                    >
+                      <MoreVertical className="w-4 h-4 text-gray-600" />
+                    </button>
+                    {openDropdownId === product.id && (
+                      <div
+                        ref={dropdownRef}
+                        className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                      >
                         <button
                           onClick={() => handleAddStock(product)}
-                          className="p-1.5 hover:bg-emerald-50 rounded-lg transition-colors group"
-                          title="Add Stock"
+                          className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                         >
-                          <Plus className="w-4 h-4 text-gray-500 group-hover:text-emerald-600" />
+                          <Plus className="w-3.5 h-3.5 text-emerald-600" />
+                          Add Stock
                         </button>
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              setOpenDropdownId(
-                                openDropdownId === product.id
-                                  ? null
-                                  : product.id,
-                              )
-                            }
-                            className="p-1.5 hover:bg-gray-100 rounded-lg"
-                          >
-                            <MoreVertical className="w-4 h-4 text-gray-500" />
-                          </button>
-                          {openDropdownId === product.id && (
-                            <div
-                              ref={dropdownRef}
-                              className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
-                            >
-                              <button
-                                onClick={() => handleEditProduct(product)}
-                                className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                              >
-                                <Edit className="w-3.5 h-3.5" />
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProduct(product.id)}
-                                className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                Delete
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <button
+                          onClick={() => handleEditProduct(product)}
+                          className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product.id)}
+                          className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete
+                        </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                    )}
+                  </div>
+                </div>
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {product.name}
+                      </h3>
+                      <p className="text-xs text-gray-500">{product.sku}</p>
+                    </div>
+                    <span className="text-xs bg-gray-100 px-2 py-1 rounded ml-2 whitespace-nowrap max-w-[100px] truncate">
+                      {product.category}
+                    </span>
+                  </div>
 
-      {/* Empty State */}
-      {filteredProducts.length === 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-12">
-          <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500">No products found</p>
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Cost Price:</span>
+                      <span className="text-gray-600">₱{product.cost}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Selling Price:</span>
+                      <span className="text-xl font-bold text-primary">
+                        ₱{product.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Profit:</span>
+                      <span className="text-emerald-600 font-medium">
+                        ₱{(product.price - product.cost).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        Stock:{" "}
+                        <span
+                          className={`font-medium ${product.stock <= product.lowStockThreshold ? "text-red-600" : "text-gray-900"}`}
+                        >
+                          {product.stock}
+                        </span>{" "}
+                        {product.unit}s
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleAddStock(product)}
+                      className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add Stock
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={
+                          selectedProducts.length === filteredProducts.length &&
+                          filteredProducts.length > 0
+                        }
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SKU/Barcode
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cost
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Profit
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredProducts.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={() => handleSelectProduct(product.id)}
+                          className="w-4 h-4 rounded border-gray-300"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {product.barcode}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm text-gray-600">{product.sku}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded max-w-[120px] truncate inline-block">
+                          {product.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-600">
+                        ₱{product.cost}
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-primary">
+                        ₱{product.price}
+                      </td>
+                      <td className="px-4 py-3 text-right text-emerald-600">
+                        ₱{(product.price - product.cost).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {product.stock <= product.lowStockThreshold && (
+                            <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                          )}
+                          <span
+                            className={`${product.stock <= product.lowStockThreshold ? "text-red-600 font-medium" : "text-gray-600"}`}
+                          >
+                            {product.stock} {product.unit}s
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="relative flex justify-center gap-2">
+                          <button
+                            onClick={() => handleAddStock(product)}
+                            className="p-1.5 hover:bg-emerald-50 rounded-lg transition-colors group"
+                            title="Add Stock"
+                          >
+                            <Plus className="w-4 h-4 text-gray-500 group-hover:text-emerald-600" />
+                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                setOpenDropdownId(
+                                  openDropdownId === product.id
+                                    ? null
+                                    : product.id,
+                                )
+                              }
+                              className="p-1.5 hover:bg-gray-100 rounded-lg"
+                            >
+                              <MoreVertical className="w-4 h-4 text-gray-500" />
+                            </button>
+                            {openDropdownId === product.id && (
+                              <div
+                                ref={dropdownRef}
+                                className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                              >
+                                <button
+                                  onClick={() => handleEditProduct(product)}
+                                  className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteProduct(product.id)
+                                  }
+                                  className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      ) : (
+        /* Empty State */
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-16 px-4">
+          <img
+            src={emptyImg}
+            alt="No products found"
+            className="w-48 h-48 mx-auto mb-6 opacity-80"
+          />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No products found
+          </h3>
+          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+            {searchTerm || selectedCategory !== "all"
+              ? "Try adjusting your search or filter to find what you're looking for."
+              : "Get started by adding your first product to your inventory."}
+          </p>
           <Button
             variant="primary"
+            icon={<Plus className="w-5 h-5" />}
             onClick={() => setShowProductModal(true)}
-            className="mt-4"
           >
-            Add your first product
+            {searchTerm || selectedCategory !== "all"
+              ? "Clear Filters & Add Product"
+              : "Add Your First Product"}
           </Button>
         </div>
       )}

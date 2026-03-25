@@ -25,6 +25,7 @@ import Help from "@/components/modals/Help";
 
 // Import help images
 import instructionsImg from "@/assets/images/instructions.png";
+import emptyImg from "@/assets/images/empty.png";
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -275,131 +276,144 @@ const Staff = () => {
         </div>
 
         {/* Staff Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Staff Member
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
-                </th>
-                <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredStaff.map((staff) => (
-                <tr
-                  key={staff.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Users className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900 truncate max-w-[150px]">
-                            {staff.name}
-                          </p>
-                          {staff.status === "active" && (
-                            <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                          )}
-                          {staff.status === "inactive" && (
-                            <div className="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0" />
-                          )}
-                          {staff.status === "pending" && (
-                            <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 truncate max-w-[180px]">
-                          {staff.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Phone className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate max-w-[140px]">
-                        {staff.phone}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(staff.status)}`}
-                    >
-                      <span className="capitalize">{staff.status}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Clock className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate max-w-[100px]">
-                        {staff.lastActive}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="relative flex items-center justify-end">
-                      <button
-                        onClick={() =>
-                          setOpenDropdownId(
-                            openDropdownId === staff.id ? null : staff.id,
-                          )
-                        }
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <MoreVertical className="w-4 h-4 text-gray-500" />
-                      </button>
-                      {openDropdownId === staff.id && (
-                        <div className="absolute right-0 mt-1 top-full w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                          <button
-                            onClick={() => handleEditStaff(staff)}
-                            className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteStaff(staff.id)}
-                            className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </td>
+        {filteredStaff.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Staff Member
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Last Active
+                  </th>
+                  <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Empty State */}
-        {filteredStaff.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No staff members found</p>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredStaff.map((staff) => (
+                  <tr
+                    key={staff.id}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Users className="w-4 h-4 text-gray-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900 truncate max-w-[150px]">
+                              {staff.name}
+                            </p>
+                            {staff.status === "active" && (
+                              <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                            )}
+                            {staff.status === "inactive" && (
+                              <div className="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0" />
+                            )}
+                            {staff.status === "pending" && (
+                              <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                            {staff.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate max-w-[140px]">
+                          {staff.phone}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(staff.status)}`}
+                      >
+                        <span className="capitalize">{staff.status}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Clock className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate max-w-[100px]">
+                          {staff.lastActive}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="relative flex items-center justify-end">
+                        <button
+                          onClick={() =>
+                            setOpenDropdownId(
+                              openDropdownId === staff.id ? null : staff.id,
+                            )
+                          }
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <MoreVertical className="w-4 h-4 text-gray-500" />
+                        </button>
+                        {openDropdownId === staff.id && (
+                          <div className="absolute right-0 mt-1 top-full w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                            <button
+                              onClick={() => handleEditStaff(staff)}
+                              className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteStaff(staff.id)}
+                              className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="text-center py-16 px-4">
+            <img
+              src={emptyImg}
+              alt="No staff members found"
+              className="w-48 h-48 mx-auto mb-6 opacity-80"
+            />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No staff members found
+            </h3>
+            <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+              {searchTerm || statusFilter !== "all"
+                ? "Try adjusting your search or filter to find what you're looking for."
+                : "Get started by adding your first staff member to your team."}
+            </p>
             <Button
               variant="primary"
+              icon={<UserPlus className="w-5 h-5" />}
               onClick={() => console.log("Add staff member")}
-              className="mt-4"
             >
-              Add your first staff member
+              {searchTerm || statusFilter !== "all"
+                ? "Clear Filters & Add Staff"
+                : "Add Your First Staff Member"}
             </Button>
           </div>
         )}

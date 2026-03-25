@@ -6,14 +6,13 @@ import {
   Edit,
   Trash2,
   Search,
-  Mail,
   Phone,
-  Calendar,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   HelpCircle,
+  MoreVertical,
 } from "lucide-react";
 import Button from "@/components/Button";
 import Select from "@/components/Select";
@@ -24,6 +23,7 @@ const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const staffData = [
     {
@@ -32,7 +32,6 @@ const Staff = () => {
       email: "maria.santos@sukipro.com",
       phone: "+63 912 345 6789",
       status: "active",
-      joinDate: "Jan 15, 2024",
       lastActive: "Today",
     },
     {
@@ -41,7 +40,6 @@ const Staff = () => {
       email: "john.reyes@sukipro.com",
       phone: "+63 923 456 7890",
       status: "active",
-      joinDate: "Feb 20, 2024",
       lastActive: "Today",
     },
     {
@@ -50,7 +48,6 @@ const Staff = () => {
       email: "anna.cruz@sukipro.com",
       phone: "+63 934 567 8901",
       status: "active",
-      joinDate: "Mar 05, 2024",
       lastActive: "Yesterday",
     },
     {
@@ -59,7 +56,6 @@ const Staff = () => {
       email: "mike.delacruz@sukipro.com",
       phone: "+63 945 678 9012",
       status: "inactive",
-      joinDate: "Jan 10, 2024",
       lastActive: "3 days ago",
     },
     {
@@ -68,7 +64,6 @@ const Staff = () => {
       email: "sarah.lim@sukipro.com",
       phone: "+63 956 789 0123",
       status: "active",
-      joinDate: "Apr 12, 2024",
       lastActive: "Today",
     },
     {
@@ -77,7 +72,6 @@ const Staff = () => {
       email: "paolo.gomez@sukipro.com",
       phone: "+63 967 890 1234",
       status: "pending",
-      joinDate: "May 01, 2024",
       lastActive: "Never",
     },
   ];
@@ -89,32 +83,39 @@ const Staff = () => {
       value: staffData.length,
       change: "+12%",
       changeType: "increase",
+      changeMessage: "+12% vs last month",
       icon: Users,
     },
     {
       id: 2,
       title: "Active Staff",
-      value: staffData.filter(s => s.status === "active").length,
+      value: staffData.filter((s) => s.status === "active").length,
       change: "+2",
       changeType: "increase",
+      changeMessage: "+2 this month",
       icon: CheckCircle,
     },
     {
       id: 3,
       title: "Inactive Staff",
-      value: staffData.filter(s => s.status === "inactive").length,
-      change: "0",
-      changeType: "warning",
+      value: staffData.filter((s) => s.status === "inactive").length,
+      change: "1",
+      changeType: "neutral",
+      changeMessage:
+        staffData.filter((s) => s.status === "inactive").length +
+        " inactive staff",
       icon: XCircle,
     },
     {
       id: 4,
       title: "Pending Invites",
-      value: staffData.filter(s => s.status === "pending").length,
+      value: staffData.filter((s) => s.status === "pending").length,
       change: "Needs Action",
       changeType: "warning",
+      changeMessage: "Pending approval",
       icon: Clock,
       alert: true,
+      alertMessage: "Needs immediate attention",
     },
   ];
 
@@ -138,20 +139,67 @@ const Staff = () => {
     }
   };
 
-  const filteredStaff = staffData.filter(staff => {
-    const matchesSearch = staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          staff.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || staff.status === statusFilter;
+  const filteredStaff = staffData.filter((staff) => {
+    const matchesSearch =
+      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" || staff.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const handleEditStaff = (staff) => {
+    console.log("Edit staff:", staff);
+    setOpenDropdownId(null);
+  };
+
+  const handleDeleteStaff = (staffId) => {
+    if (confirm("Delete this staff member?")) {
+      console.log("Delete staff:", staffId);
+    }
+    setOpenDropdownId(null);
+  };
+
+  const helpSlides = [
+    {
+      id: 1,
+      title: "Welcome to Staff Management",
+      description:
+        "Learn how to efficiently manage your team members, track their status, and control access permissions.",
+      image: null,
+      alt: "Instructions",
+    },
+    {
+      id: 2,
+      title: "Adding Staff Members",
+      description:
+        "Easily add new staff members by clicking the 'Add Staff Member' button. Fill in their details and assign appropriate roles.",
+      image: null,
+      alt: "Add Staff",
+    },
+    {
+      id: 3,
+      title: "Staff Status Indicators",
+      description:
+        "Track staff availability with status indicators: Green for active, Gray for inactive, and Yellow for pending invites.",
+      image: null,
+      alt: "Status Indicators",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Header Section */}
+      {/* Header Section - Help button beside page title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-gray-900">Staff Management</h1>
-          <p className="text-gray-500 mt-1">Manage your team members</p>
+          <button
+            onClick={() => setShowHelpModal(true)}
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Help"
+          >
+            <HelpCircle className="w-5 h-5 text-gray-500 hover:text-primary transition-colors" />
+          </button>
         </div>
         <div className="flex gap-3">
           <Button
@@ -160,13 +208,6 @@ const Staff = () => {
             onClick={() => console.log("Add staff member")}
           >
             Add Staff Member
-          </Button>
-          <Button
-            variant="outline"
-            icon={<HelpCircle className="w-5 h-5" />}
-            onClick={() => setShowHelpModal(true)}
-          >
-            Help
           </Button>
         </div>
       </div>
@@ -202,66 +243,110 @@ const Staff = () => {
           </div>
         </div>
 
-        {/* Staff Table */}
+        {/* Staff Table with ellipsis on text overflow */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
-                <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Staff Member
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Active
+                </th>
+                <th className="text-right px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredStaff.map((staff) => (
-                <tr key={staff.id} className="hover:bg-gray-50 transition-colors">
+                <tr
+                  key={staff.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <Users className="w-4 h-4 text-gray-600" />
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{staff.name}</p>
-                        <p className="text-xs text-gray-500">{staff.email}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 truncate max-w-[150px]">
+                            {staff.name}
+                          </p>
+                          {/* Green indicator for active staff */}
+                          {staff.status === "active" && (
+                            <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate max-w-[180px]">
+                          {staff.email}
+                        </p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Phone className="w-3 h-3" />
-                      <span>{staff.phone}</span>
+                      <Phone className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate max-w-[140px]">
+                        {staff.phone}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(staff.status)}`}>
+                    <span
+                      className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(staff.status)}`}
+                    >
                       <span className="capitalize">{staff.status}</span>
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Calendar className="w-3 h-3" />
-                      <span>{staff.joinDate}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                      <Clock className="w-3 h-3" />
-                      <span>{staff.lastActive}</span>
+                      <Clock className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate max-w-[100px]">
+                        {staff.lastActive}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <Edit className="w-4 h-4 text-gray-500" />
+                    <div className="relative flex items-center justify-end">
+                      <button
+                        onClick={() =>
+                          setOpenDropdownId(
+                            openDropdownId === staff.id ? null : staff.id,
+                          )
+                        }
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <MoreVertical className="w-4 h-4 text-gray-500" />
                       </button>
-                      <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
+                      {openDropdownId === staff.id && (
+                        <div className="absolute right-0 mt-1 top-full w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                          <button
+                            onClick={() => handleEditStaff(staff)}
+                            className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStaff(staff.id)}
+                            className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
-                   </td>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -284,10 +369,14 @@ const Staff = () => {
         )}
       </div>
 
-      {/* Help Modal */}
+      {/* Help Modal with slides like Inventory.jsx */}
       <Help
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
+        slides={helpSlides}
+        title="Staff Management Help & Tutorials"
+        icon={HelpCircle}
+        buttonText="Got it"
       />
     </div>
   );

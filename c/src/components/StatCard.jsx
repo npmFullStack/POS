@@ -29,18 +29,26 @@ const StatCard = ({ stat }) => {
     }
   };
 
-  // Check if this stat should have a progress bar
+  // Generic function to check if stat has a progress bar
+  // Now uses a more flexible approach: look for progressConfig or specific properties
   const hasProgressBar = () => {
-    // Only show progress bar for Low Stock Items when totalStock exists
+    // Check if stat has explicit progress configuration
+    if (stat.progressConfig) {
+      return stat.progressConfig.enabled && stat.progressConfig.total > 0;
+    }
+    // Legacy support for specific titles (backward compatibility)
     if (
-      stat.title === "Low Stock Items" &&
       stat.totalStock &&
-      stat.totalStock > 0
+      stat.totalStock > 0 &&
+      stat.title === "Low Stock Items"
     ) {
       return true;
     }
-    // Only show progress bar for Total Products when capacity exists
-    if (stat.title === "TOTAL PRODUCTS" && stat.capacity && stat.capacity > 0) {
+    if (stat.capacity && stat.capacity > 0 && stat.title === "Total Products") {
+      return true;
+    }
+    // Generic: if stat has total and current value, show progress bar
+    if (stat.total && stat.total > 0 && typeof stat.value === "number") {
       return true;
     }
     return false;
@@ -48,17 +56,33 @@ const StatCard = ({ stat }) => {
 
   // Calculate progress percentage
   const getProgressPercentage = () => {
+    // Use explicit progress configuration if available
+    if (stat.progressConfig) {
+      const { value, total } = stat.progressConfig;
+      if (total && total > 0) {
+        const percentage = (value / total) * 100;
+        return Math.min(percentage, 100);
+      }
+      return 0;
+    }
+
+    // Legacy support
     if (
-      stat.title === "Low Stock Items" &&
       stat.totalStock &&
-      stat.totalStock > 0
+      stat.totalStock > 0 &&
+      stat.title === "Low Stock Items"
     ) {
       const percentage = (stat.value / stat.totalStock) * 100;
-      // Cap at 100% to avoid overflow
       return Math.min(percentage, 100);
     }
-    if (stat.title === "Total Products" && stat.capacity && stat.capacity > 0) {
+    if (stat.capacity && stat.capacity > 0 && stat.title === "Total Products") {
       const percentage = (stat.value / stat.capacity) * 100;
+      return Math.min(percentage, 100);
+    }
+
+    // Generic: use stat.total and stat.value
+    if (stat.total && stat.total > 0 && typeof stat.value === "number") {
+      const percentage = (stat.value / stat.total) * 100;
       return Math.min(percentage, 100);
     }
     return 0;
@@ -67,14 +91,25 @@ const StatCard = ({ stat }) => {
   const Icon = stat.icon;
   const showProgressBar = hasProgressBar();
   const progressPercentage = getProgressPercentage();
-  const isWarning = stat.changeType === "warning";
+  const isWarning = stat.changeType === "warning" || stat.alert;
 
   // Determine what message to show
   const getMessage = () => {
     if (stat.alert) {
-      return "Needs immediate attention";
+      return stat.alertMessage || "Needs immediate attention";
+    }
+    if (stat.changeMessage) {
+      return stat.changeMessage;
     }
     return stat.change;
+  };
+
+  // Get progress bar color (can be customized via progressConfig)
+  const getProgressBarColor = () => {
+    if (stat.progressConfig?.color) {
+      return stat.progressConfig.color;
+    }
+    return isWarning ? "bg-red-600" : "bg-primary";
   };
 
   return (
@@ -109,15 +144,14 @@ const StatCard = ({ stat }) => {
           <div className="mt-2">
             <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`rounded-full h-1.5 transition-all duration-300 ${
-                  isWarning ? "bg-red-600" : "bg-primary"
-                }`}
+                className={`rounded-full h-1.5 transition-all duration-300 ${getProgressBarColor()}`}
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
-            {/* Optional: Show percentage text */}
+            {/* Optional: Show percentage text or custom label */}
             <p className="text-xs text-gray-500 mt-1">
-              {Math.round(progressPercentage)}% of total
+              {stat.progressConfig?.label ||
+                `${Math.round(progressPercentage)}% of total`}
             </p>
           </div>
         )}

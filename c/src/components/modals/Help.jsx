@@ -89,7 +89,7 @@ const Help = ({ isOpen, onClose }) => {
           {/* Content - Compact size */}
           <div className="p-5">
             {/* Image Container - Smaller */}
-            <div className="bg-gray-50 rounded-xl overflow-hidden mb-4">
+            <div className="overflow-hidden mb-4">
               <img
                 src={slides[currentSlide].image}
                 alt={slides[currentSlide].alt}

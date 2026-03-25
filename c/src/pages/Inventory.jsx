@@ -1,11 +1,10 @@
 // pages/Inventory.jsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Package,
   Plus,
   Upload,
   Search,
-  Filter,
   Edit,
   Trash2,
   MoreVertical,
@@ -14,7 +13,6 @@ import {
   List,
   ChevronDown,
   Layers,
-  DollarSign,
   HelpCircle,
 } from "lucide-react";
 import Button from "@/components/Button";
@@ -25,6 +23,14 @@ import NewCategory from "@/components/modals/NewCategory";
 import NewProduct from "@/components/modals/NewProduct";
 import ImportProduct from "@/components/modals/ImportProduct";
 import Help from "@/components/modals/Help";
+
+// Import images locally
+import instructionsImg from "@/assets/images/instructions.png";
+import addStockImg from "@/assets/images/newProduct.png";
+import importProductImg from "@/assets/images/importProduct.png";
+import newCategoryImg from "@/assets/images/newCategory.png";
+import newProductImg from "@/assets/images/newProduct.png";
+import PesoSign from "@/assets/icons/PesoSign.svg";
 
 const Inventory = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -174,6 +180,7 @@ const Inventory = () => {
       change: "+12% vs last month",
       changeType: "increase",
       icon: Package,
+      capacity: 100,
     },
     {
       id: 2,
@@ -183,6 +190,7 @@ const Inventory = () => {
       changeType: "warning",
       icon: AlertCircle,
       alert: true,
+      totalStock: products.length,
     },
     {
       id: 3,
@@ -198,7 +206,50 @@ const Inventory = () => {
       value: `₱${products.reduce((sum, p) => sum + p.price * p.stock, 0).toLocaleString()}`,
       change: "Current valuation",
       changeType: "neutral",
-      icon: DollarSign,
+      icon: () => <img src={PesoSign} alt="Peso" className="w-4 h-4" />,
+    },
+  ];
+
+  const helpSlides = [
+    {
+      id: 1,
+      title: "Welcome to Inventory Management",
+      description:
+        "Learn how to efficiently manage your products, track stock levels, and optimize your inventory with our comprehensive system.",
+      image: instructionsImg,
+      alt: "Instructions",
+    },
+    {
+      id: 2,
+      title: "Adding Stock Made Easy",
+      description:
+        "Quickly add stock to any product with our intuitive interface. Simply click 'Add Stock' and enter the quantity to update inventory instantly.",
+      image: addStockImg,
+      alt: "Add Stock",
+    },
+    {
+      id: 3,
+      title: "Bulk Import Products",
+      description:
+        "Save time by importing multiple products at once using Excel or CSV files. Our system will automatically validate and add your products.",
+      image: importProductImg,
+      alt: "Import Products",
+    },
+    {
+      id: 4,
+      title: "Organize with Categories",
+      description:
+        "Create custom categories to better organize your products. Filter, sort, and manage products more efficiently with proper categorization.",
+      image: newCategoryImg,
+      alt: "New Category",
+    },
+    {
+      id: 5,
+      title: "Add New Products",
+      description:
+        "Add individual products with detailed information including name, SKU, pricing, and stock levels. Set low stock thresholds for alerts.",
+      image: newProductImg,
+      alt: "New Product",
     },
   ];
 
@@ -283,7 +334,7 @@ const Inventory = () => {
   };
 
   // Close dropdown when clicking outside
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpenDropdownId(null);
@@ -295,35 +346,75 @@ const Inventory = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section - Help button now beside page title */}
+      {/* Header Section - Help button beside page title with no borders and transparent bg */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-bold text-gray-900">
             Inventory Management
           </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<HelpCircle className="w-5 h-5" />}
+          <button
             onClick={() => setShowHelpModal(true)}
-            className="!p-2 hover:bg-gray-100 rounded-full"
-          />
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Help"
+          >
+            <HelpCircle className="w-5 h-5 text-gray-500 hover:text-primary transition-colors" />
+          </button>
         </div>
-        <p className="text-gray-500 mt-1 sm:mt-0">
-          Track stock levels, monitor product performance, and manage your
-          entire inventory in one place
-        </p>
+        <div className="flex gap-3">
+          {/* New Dropdown Button */}
+          <div className="relative">
+            <Button
+              variant="primary"
+              icon={<Plus className="w-5 h-5" />}
+              onClick={() => setShowNewDropdown(!showNewDropdown)}
+            >
+              New
+              <ChevronDown className="w-4 h-4 ml-1" />
+            </Button>
+            {showNewDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-1 border border-gray-100 z-20">
+                <button
+                  onClick={() => {
+                    setShowProductModal(true);
+                    setShowNewDropdown(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors flex items-center gap-2"
+                >
+                  <Package className="w-4 h-4" />
+                  Product
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCategoryModal(true);
+                    setShowNewDropdown(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-primary/5 hover:text-primary transition-colors flex items-center gap-2"
+                >
+                  <Layers className="w-4 h-4" />
+                  Category
+                </button>
+              </div>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            icon={<Upload className="w-5 h-5" />}
+            onClick={() => setShowImportModal(true)}
+          >
+            Import
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Grid - Modern with gradient and no emojis */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <StatCard key={stat.id} stat={stat} />
         ))}
       </div>
 
-      {/* Search and Filter Bar - No border or bg color */}
-      <div className="p-4">
+      {/* Search and Filter Bar */}
+      <div className="p-0">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -689,7 +780,14 @@ const Inventory = () => {
         onClose={() => setShowImportModal(false)}
         onImport={handleImportFile}
       />
-      <Help isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
+      <Help
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        slides={helpSlides}
+        title="Inventory Help & Tutorials"
+        icon={HelpCircle}
+        buttonText="Got it"
+      />
     </div>
   );
 };

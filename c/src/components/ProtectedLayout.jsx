@@ -11,7 +11,7 @@ import {
   LogOut,
   Store,
   User,
-Users,
+  Users,
   X,
 } from "lucide-react";
 import shopImage from "@/assets/images/shop.png";
@@ -25,8 +25,8 @@ const ProtectedLayout = () => {
 
   // Mock user data
   const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "Norway Mangorangca",
+    email: "norway@test.com",
   };
 
   const navLinks = [
@@ -34,7 +34,7 @@ const ProtectedLayout = () => {
     { id: 2, name: "Sales", path: "/sales", icon: ShoppingCart },
     { id: 3, name: "Inventory", path: "/inventory", icon: Package },
 
-        { id: 4, name: "Staff", path: "/staffs", icon: Users },
+    { id: 4, name: "Staff", path: "/staffs", icon: Users },
     { id: 5, name: "Reports", path: "/reports", icon: BarChart3 },
     { id: 6, name: "Settings", path: "/settings", icon: Settings },
   ];

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, Store, MapPin, X, HelpCircle } from "lucide-react";
 import Button from "@/components/Button";
 import Help from "@/components/modals/Help";
+import { authService } from "@/services/auth.service";
+import { shopService } from "@/services/shop.service";
 import instructionsImg from "@/assets/images/instructions.png";
 
 const CreateShop = () => {
@@ -15,6 +17,7 @@ const CreateShop = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [error, setError] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,17 +25,23 @@ const CreateShop = () => {
       ...prev,
       [name]: value,
     }));
+    setError("");
   };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setError("Image size should be less than 2MB");
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         shopImage: file,
       }));
 
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -52,36 +61,63 @@ const CreateShop = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate form
     if (!formData.shopName.trim()) {
-      alert("Please enter shop name");
+      setError("Please enter shop name");
       return;
     }
     if (!formData.address.trim()) {
-      alert("Please enter shop address");
+      setError("Please enter shop address");
       return;
     }
 
     setIsSubmitting(true);
+    setError("");
 
     try {
-      // TODO: Implement API call to create shop
-      // const formDataToSend = new FormData();
-      // formDataToSend.append('name', formData.shopName);
-      // formDataToSend.append('address', formData.address);
-      // if (formData.shopImage) {
-      //   formDataToSend.append('image', formData.shopImage);
-      // }
-      // await api.createShop(formDataToSend);
+      // Get current user
+      const {
+        success,
+        user,
+        error: userError,
+      } = await authService.getCurrentUser();
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!success || !user || !user.profile) {
+        throw new Error("User not found. Please sign in again.");
+      }
 
-      // Navigate back to switch shop page
-      navigate("/switch-shop");
+      console.log("Creating shop for user:", user.profile.id);
+
+      // Create shop with image upload handled internally
+      const result = await shopService.createShop(
+        {
+          name: formData.shopName,
+          address: formData.address,
+          shopImage: formData.shopImage,
+        },
+        user.profile.id,
+      );
+
+      if (result.success) {
+        console.log("Shop created successfully:", result.data);
+
+        // Set as active shop
+        shopService.setActiveShop(result.data.id);
+
+        // Dispatch event to notify ProtectedLayout about shop creation
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("shop-created"));
+          window.dispatchEvent(new Event("shop-changed"));
+        }
+
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        console.error("Shop creation failed:", result.error);
+        setError(result.error || "Failed to create shop");
+      }
     } catch (error) {
       console.error("Error creating shop:", error);
-      alert("Failed to create shop. Please try again.");
+      setError(error.message || "Failed to create shop. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +129,6 @@ const CreateShop = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Section - Matching SwitchShop style */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -119,10 +154,14 @@ const CreateShop = () => {
         </div>
       </div>
 
-      {/* Form Card - Matching modal styling */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <form onSubmit={handleSubmit}>
-          {/* Form Content */}
           <div className="p-6 space-y-6">
             {/* Shop Image Upload */}
             <div>
@@ -130,7 +169,6 @@ const CreateShop = () => {
                 Shop Image
               </h3>
               <div className="flex items-start gap-4">
-                {/* Image Preview Area */}
                 <div className="flex-shrink-0">
                   {imagePreview ? (
                     <div className="relative">
@@ -154,7 +192,6 @@ const CreateShop = () => {
                   )}
                 </div>
 
-                {/* Upload Button */}
                 <div className="flex-1">
                   <input
                     type="file"
@@ -224,7 +261,6 @@ const CreateShop = () => {
               </div>
             </div>
 
-            {/* Info Alert */}
             <div className="bg-red-50 rounded-lg p-3 flex items-start gap-2">
               <Store className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
               <p className="text-xs font-semibold text-primary">
@@ -233,7 +269,6 @@ const CreateShop = () => {
             </div>
           </div>
 
-          {/* Actions - Sticky footer matching modal style */}
           <div className="sticky bottom-0 bg-white border-t border-gray-100 p-5 flex justify-end gap-3">
             <Button variant="outline" onClick={handleBack} type="button">
               Cancel
@@ -249,7 +284,6 @@ const CreateShop = () => {
         </form>
       </div>
 
-      {/* Help Modal */}
       <Help
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}
@@ -258,7 +292,7 @@ const CreateShop = () => {
             id: 1,
             title: "Create a New Shop",
             description:
-              "Fill in the shop details to create a new store. Each shop can have its own inventory, staff, and settings.",
+              "Fill in the shop details to create a new store. Your shop will be ready to use immediately.",
             image: instructionsImg,
             alt: "Create Shop Overview",
             isImage: true,
@@ -276,16 +310,16 @@ const CreateShop = () => {
             id: 3,
             title: "Shop Image",
             description:
-              "Upload a square image for your shop logo or storefront. This will help identify your shop in the switch shop menu.",
+              "Upload a square image for your shop logo or storefront. This will help identify your shop in the shop switcher.",
             icon: Upload,
             iconColor: "text-white",
             bgColor: "bg-primary",
           },
           {
             id: 4,
-            title: "Next Steps",
+            title: "Ready to Go",
             description:
-              "After creating your shop, you'll be redirected to the switch shop page where you can select your new shop as active.",
+              "After creating your shop, you'll be redirected to your dashboard where you can start managing your business.",
             icon: ArrowLeft,
             iconColor: "text-white",
             bgColor: "bg-primary",

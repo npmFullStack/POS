@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, CheckCircle, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { authService } from "@/services/auth.service";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -16,25 +18,73 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
-    // Simulate loading then navigate to dashboard
-    setTimeout(() => {
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    const result = await authService.signUp(
+      formData.email,
+      formData.password,
+      formData.firstName,
+      formData.lastName,
+    );
+
+    if (result.success) {
+      // Show success message
+      setShowSuccess(true);
+      // Clear form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        navigate("/login", {
+          state: {
+            message:
+              "Account created successfully! Please check your email to confirm your account before signing in.",
+          },
+        });
+      }, 3000);
+    } else {
+      setError(result.error || "Failed to create account");
       setLoading(false);
-      navigate("/dashboard");
-    }, 500);
+    }
   };
 
-  const handleGoogle = () => {
-    // Direct navigation without validation
-    navigate("/dashboard");
+  const handleGoogle = async () => {
+    setLoading(true);
+    const { success, error: googleError } =
+      await authService.signInWithGoogle();
+
+    if (!success) {
+      setError(googleError || "Google sign in failed");
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +100,6 @@ const SignUp = () => {
               "radial-gradient(125% 125% at 50% 10%, #fff 30%, #FF0800 100%)",
           }}
         >
-          {/* Center content */}
           <div className="flex-1 flex flex-col justify-center">
             <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
               Start managing your
@@ -93,11 +142,30 @@ const SignUp = () => {
               </p>
             </div>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
+            {showSuccess && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                <div className="font-semibold mb-1">
+                  Account created successfully! 🎉
+                </div>
+                <div>
+                  Please check your email to confirm your account. You'll be
+                  redirected to the login page in a moment.
+                </div>
+              </div>
+            )}
+
             {/* Google Button */}
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-200 mb-6 shadow-sm"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-200 mb-6 shadow-sm disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -131,7 +199,6 @@ const SignUp = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* First & Last Name */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -142,6 +209,7 @@ const SignUp = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
+                    required
                     placeholder="Juan"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                   />
@@ -155,13 +223,13 @@ const SignUp = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
+                    required
                     placeholder="dela Cruz"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                   />
                 </div>
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Email Address
@@ -171,12 +239,12 @@ const SignUp = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   placeholder="juan@example.com"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Password
@@ -187,13 +255,14 @@ const SignUp = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Min. 8 characters"
+                    required
+                    placeholder="Min. 6 characters"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-11 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -204,7 +273,6 @@ const SignUp = () => {
                 </div>
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Confirm Password
@@ -215,13 +283,14 @@ const SignUp = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    required
                     placeholder="Re-enter your password"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-11 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     {showConfirm ? (
                       <EyeOff className="w-4 h-4" />
@@ -232,7 +301,6 @@ const SignUp = () => {
                 </div>
               </div>
 
-              {/* Terms */}
               <p className="text-xs text-gray-400 leading-relaxed">
                 By creating an account, you agree to our{" "}
                 <Link to="/terms" className="text-primary hover:underline">
@@ -245,7 +313,6 @@ const SignUp = () => {
                 .
               </p>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

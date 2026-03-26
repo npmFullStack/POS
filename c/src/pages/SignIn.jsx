@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -10,34 +10,83 @@ import {
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { authService } from "@/services/auth.service";
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { success, user } = await authService.getCurrentUser();
+      if (success && user) {
+        // User is already logged in, redirect to dashboard
+        navigate("/dashboard");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
+  // Check for success message from signup
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
+    setSuccessMessage("");
 
-    // Simulate loading then navigate to dashboard
-    setTimeout(() => {
-      setLoading(false);
+    console.log("Attempting sign in with:", formData.email);
+
+    const {
+      success,
+      error: signInError,
+      data,
+    } = await authService.signIn(formData.email, formData.password);
+
+    if (success) {
+      console.log("Sign in successful:", data);
+      // Navigate to dashboard
       navigate("/dashboard");
-    }, 500);
+    } else {
+      console.error("Sign in failed:", signInError);
+      setError(signInError || "Invalid email or password");
+      setLoading(false);
+    }
   };
 
-  const handleGoogle = () => {
-    // Direct navigation without validation
-    navigate("/dashboard");
+  const handleGoogle = async () => {
+    setLoading(true);
+    setError("");
+
+    const { success, error: googleError } =
+      await authService.signInWithGoogle();
+
+    if (!success) {
+      setError(googleError || "Google sign in failed");
+      setLoading(false);
+    }
+    // Google sign in will redirect, so no need to handle navigation here
   };
 
   return (
@@ -53,7 +102,6 @@ const SignIn = () => {
               "radial-gradient(125% 125% at 50% 10%, #fff 30%, #FF0800 100%)",
           }}
         >
-          {/* Center content */}
           <div className="flex-1 flex flex-col justify-center">
             <h2 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
               Welcome back to
@@ -121,11 +169,24 @@ const SignIn = () => {
               </p>
             </div>
 
+            {successMessage && (
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                {successMessage}
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
             {/* Google Button */}
             <button
               type="button"
               onClick={handleGoogle}
-              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-200 mb-6 shadow-sm"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-3 px-4 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-200 mb-6 shadow-sm disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -159,7 +220,6 @@ const SignIn = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                   Email Address
@@ -169,12 +229,12 @@ const SignIn = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   placeholder="juan@example.com"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-sm font-semibold text-gray-700">
@@ -193,13 +253,14 @@ const SignIn = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
+                    required
                     placeholder="Enter your password"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-11 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/10 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4" />
@@ -210,7 +271,6 @@ const SignIn = () => {
                 </div>
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}

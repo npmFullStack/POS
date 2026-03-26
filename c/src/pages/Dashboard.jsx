@@ -1,4 +1,4 @@
-// Dashboard.jsx - Updated with image holder, removed New Sale, added help and save image icons
+// Dashboard.jsx
 import React, { useState, useRef } from "react";
 import {
   PhilippinePeso,
@@ -13,7 +13,7 @@ import {
   Download,
   RefreshCw,
   AlertTriangle,
-  Camera,
+  Image,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -138,7 +138,7 @@ const Dashboard = () => {
     { name: "Instant Noodles", value: 10, color: "#FFB347" },
   ];
 
-  // Updated recent transactions data (without customer name)
+  // Recent transactions data
   const recentTransactions = [
     {
       id: "TRX-2345",
@@ -409,15 +409,15 @@ const Dashboard = () => {
                 </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                icon={<Camera className="w-4 h-4" />}
+                icon={<Image className="w-4 h-4" />}
                 onClick={() =>
                   captureChartAsImage(salesTrendRef, "Sales_Trend")
                 }
-                className="p-2 hover:bg-gray-100 rounded-lg"
-                title="Save chart as image"
-              />
+              >
+                Save as Image
+              </Button>
             </div>
           </div>
           <div className="p-6" ref={salesTrendRef}>
@@ -459,18 +459,18 @@ const Dashboard = () => {
                 </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                icon={<Camera className="w-4 h-4" />}
+                icon={<Image className="w-4 h-4" />}
                 onClick={() =>
                   captureChartAsImage(
                     transactionsProfitRef,
                     "Transactions_Profit",
                   )
                 }
-                className="p-2 hover:bg-gray-100 rounded-lg"
-                title="Save chart as image"
-              />
+              >
+                Save as Image
+              </Button>
             </div>
           </div>
           <div className="p-6" ref={transactionsProfitRef}>
@@ -514,18 +514,18 @@ const Dashboard = () => {
                 </p>
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                icon={<Camera className="w-4 h-4" />}
+                icon={<Image className="w-4 h-4" />}
                 onClick={() =>
                   captureChartAsImage(
                     categoryDistributionRef,
                     "Category_Distribution",
                   )
                 }
-                className="p-2 hover:bg-gray-100 rounded-lg"
-                title="Save chart as image"
-              />
+              >
+                Save as Image
+              </Button>
             </div>
           </div>
           <div className="p-6" ref={categoryDistributionRef}>
@@ -669,7 +669,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Low Stock Alert - With Image Holder */}
+        {/* Low Stock Alert */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-orange-50/30">
             <div className="flex items-center justify-between">
@@ -697,7 +697,7 @@ const Dashboard = () => {
             {lowStockProducts.map((product, idx) => (
               <div key={idx} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-4">
-                  {/* Image Holder - similar to Inventory */}
+                  {/* Image Holder */}
                   <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center flex-shrink-0">
                     {product.image ? (
                       <img
@@ -747,7 +747,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-      {/* Quick Actions Section - Removed New Sale */}
+      {/* Quick Actions Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Quick Actions
@@ -801,7 +801,7 @@ const Dashboard = () => {
             id: 2,
             title: "Sales Analytics",
             description:
-              "Track your daily sales performance with interactive charts. Click the camera icon to save charts as images for reports.",
+              "Track your daily sales performance with interactive charts. Click the 'Save as Image' button to download charts as images for reports.",
             icon: TrendingUp,
             iconColor: "text-white",
             bgColor: "bg-primary",

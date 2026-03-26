@@ -18,6 +18,7 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const SwitchShop = lazy(() => import("@/pages/SwitchShop"));
 const ImportProduct = lazy(() => import("@/pages/ImportProduct"));
 const CreateShop = lazy(() => import("@/pages/CreateShop"));
+const NoShop = lazy(() => import("@/pages/NoShop"));
 
 // Lazy load public store components
 const PublicStoreLogin = lazy(() => import("@/public-store/Login"));
@@ -55,6 +56,7 @@ const App = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/switch-shop" element={<SwitchShop />} />
               <Route path="/create-shop" element={<CreateShop />} />
+                            <Route path="/no-shop" element={<NoShop />} />
             </Route>
           </Routes>
         </Suspense>

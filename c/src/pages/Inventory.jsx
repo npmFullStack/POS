@@ -9,7 +9,7 @@ import {
   Edit,
   Trash2,
   MoreVertical,
-  AlertCircle,
+  PhilippinePeso,
   Grid,
   List,
   ChevronDown,
@@ -27,7 +27,6 @@ import NewCategory from "@/components/modals/NewCategory";
 import NewProduct from "@/components/modals/NewProduct";
 import NewUnit from "@/components/modals/NewUnit";
 import Help from "@/components/modals/Help";
-import PesoSign from "@/assets/icons/PesoSign";
 
 // Import images locally
 import instructionsImg from "@/assets/images/instructions.png";
@@ -246,7 +245,7 @@ const Inventory = () => {
       value: `₱${products.reduce((sum, p) => sum + p.price * p.stock, 0).toLocaleString()}`,
       change: "Current valuation",
       changeType: "neutral",
-      icon: PesoSign,
+      icon: PhilippinePeso,
     },
   ];
 

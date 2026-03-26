@@ -15,7 +15,7 @@ import {
   Package,
   Barcode,
   Tag,
-  DollarSign,
+  PhilippinePeso,
   Box,
   AlertTriangle,
   HelpCircle,
@@ -26,7 +26,6 @@ import * as XLSX from "xlsx";
 import Button from "@/components/Button";
 import Help from "@/components/modals/Help";
 import Select from "@/components/Select";
-import PesoSign from "@/assets/icons/PesoSign";
 import instructionsImg from "@/assets/images/instructions.png";
 
 const ImportProduct = () => {
@@ -63,8 +62,13 @@ const ImportProduct = () => {
   const allProductFields = [
     { key: "name", label: "Product Name", icon: Package, required: true },
     { key: "sku", label: "SKU", icon: Tag, required: true },
-    { key: "price", label: "Selling Price", icon: PesoSign, required: true },
-    { key: "cost", label: "Cost Price", icon: PesoSign, required: false },
+    {
+      key: "price",
+      label: "Selling Price",
+      icon: PhilippinePeso,
+      required: true,
+    },
+    { key: "cost", label: "Cost Price", icon: PhilippinePeso, required: false },
     { key: "stock", label: "Initial Stock", icon: Box, required: true },
     { key: "barcode", label: "Barcode", icon: Barcode, required: false },
     { key: "category", label: "Category", icon: Tag, required: false },

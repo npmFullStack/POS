@@ -33,7 +33,6 @@ const ProtectedLayout = () => {
     { id: 1, name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { id: 2, name: "Sales", path: "/sales", icon: ShoppingCart },
     { id: 3, name: "Inventory", path: "/inventory", icon: Package },
-
     { id: 4, name: "Staff", path: "/staffs", icon: Users },
     { id: 5, name: "Reports", path: "/reports", icon: BarChart3 },
     { id: 6, name: "Settings", path: "/settings", icon: Settings },
@@ -41,6 +40,11 @@ const ProtectedLayout = () => {
 
   const handleLogout = () => {
     navigate("/login");
+  };
+
+  const handleSwitchShop = () => {
+    setIsShopDropdownOpen(false);
+    navigate("/switch-shop");
   };
 
   return (
@@ -108,7 +112,7 @@ const ProtectedLayout = () => {
             {isShopDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-200 z-50">
                 <button
-                  onClick={() => setIsShopDropdownOpen(false)}
+                  onClick={handleSwitchShop}
                   className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                 >
                   <Store className="w-4 h-4" />

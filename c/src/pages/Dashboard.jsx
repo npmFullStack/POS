@@ -36,11 +36,9 @@ import Button from "@/components/Button";
 import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 import CustomDateRangePicker from "@/components/CustomDateRangePicker";
-import PesoSign from "@/assets/icons/PesoSign";
 import Help from "@/components/modals/Help";
 
 // Import empty image for image holder
-import emptyImg from "@/assets/images/empty.png";
 import instructionsImg from "@/assets/images/instructions.png";
 
 const Dashboard = () => {
@@ -107,7 +105,7 @@ const Dashboard = () => {
       value: "₱8,450",
       change: "Ready for deposit",
       changeType: "neutral",
-      icon: PesoSign,
+      icon: PhilippinePeso,
       capacity: 100,
     },
     {
@@ -638,7 +636,7 @@ const Dashboard = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                        <PesoSign className="w-4 h-4 text-gray-600" />
+                        <PhilippinePeso className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">

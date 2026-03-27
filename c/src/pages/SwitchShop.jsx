@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Store,
@@ -8,73 +8,119 @@ import {
   Plus,
   HelpCircle,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
 import Button from "@/components/Button";
 import Help from "@/components/modals/Help";
 import instructionsImg from "@/assets/images/instructions.png";
+import { shopService } from "@/services/shop.service";
+import { authService } from "@/services/auth.service";
 
 const SwitchShop = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [shops, setShops] = useState([]);
+  const [activeShop, setActiveShop] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [switchingShopId, setSwitchingShopId] = useState(null);
+  const [error, setError] = useState(null);
 
-  // Mock shops data - only one active shop at a time
-  const [shops, setShops] = useState([
-    {
-      id: 1,
-      name: "Nors",
-      address: "123 Main Street, Downtown",
-      type: "Retail Store",
-      status: "active",
-      image:
-        "https://ui-avatars.com/api/?name=Nors&background=FF0800&color=fff",
-    },
-    {
-      id: 2,
-      name: "TechHub",
-      address: "456 Tech Avenue, Business District",
-      type: "Electronics Store",
-      status: "inactive",
-      lastActive: "1 hour ago",
-      image:
-        "https://ui-avatars.com/api/?name=TechHub&background=3B82F6&color=fff",
-    },
-    {
-      id: 3,
-      name: "Fashionista",
-      address: "789 Style Street, Fashion District",
-      type: "Clothing Boutique",
-      status: "inactive",
-      lastActive: "1 day ago",
-      image:
-        "https://ui-avatars.com/api/?name=Fashionista&background=10B981&color=fff",
-    },
-  ]);
+  // Load user shops and active shop
+  const loadShops = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // Filter shops based on search term
-  const filteredShops = shops.filter(
-    (shop) =>
-      shop.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.type.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+      // Get current user
+      const { success: userSuccess, user } = await authService.getCurrentUser();
+      
+      if (!userSuccess || !user?.profile) {
+        navigate("/login");
+        return;
+      }
 
-  const handleSwitchShop = (shop) => {
-    // Update active status - selected shop becomes active
-    const updatedShops = shops.map((s) => ({
-      ...s,
-      status: s.id === shop.id ? "active" : "inactive",
-    }));
-    setShops(updatedShops);
+      // Get all shops
+      const shopsResult = await shopService.getAllUserShops(user.profile.id);
+      
+      if (!shopsResult.success) {
+        setError("Failed to load shops. Please try again.");
+        return;
+      }
+
+      const userShops = shopsResult.data || [];
+      setShops(userShops);
+
+      // Get active shop
+      const activeResult = await shopService.getActiveShop(user.profile.id);
+      
+      if (activeResult.success && activeResult.data) {
+        setActiveShop(activeResult.data);
+      }
+    } catch (err) {
+      console.error("Error loading shops:", err);
+      setError("An error occurred while loading shops.");
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    loadShops();
+  }, [loadShops]);
+
+  const handleSwitchShop = async (shop) => {
+    try {
+      setSwitchingShopId(shop.id);
+      setError(null);
+
+      // Set active shop in localStorage and state
+      shopService.setActiveShop(shop.id);
+      setActiveShop(shop);
+
+      // Update the shops list to reflect the new active status
+      setShops(prevShops =>
+        prevShops.map(s => ({
+          ...s,
+          isActive: s.id === shop.id,
+        }))
+      );
+
+      // Navigate back to dashboard after switching
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Error switching shop:", err);
+      setError("Failed to switch shop. Please try again.");
+    } finally {
+      setSwitchingShopId(null);
+    }
   };
 
   const handleCreateShop = () => {
     navigate("/create-shop");
   };
 
+  // Filter shops based on search term
+  const filteredShops = shops.filter(
+    (shop) =>
+      shop.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shop.address?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Separate active shop and inactive shops
-  const activeShop = shops.find((shop) => shop.status === "active");
-  const inactiveShops = shops.filter((shop) => shop.status !== "active");
+  const currentActiveShop = activeShop;
+  const inactiveShops = filteredShops.filter(
+    (shop) => shop.id !== currentActiveShop?.id
+  );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+        <p className="text-gray-500">Loading your shops...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -101,6 +147,13 @@ const SwitchShop = () => {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Search Bar - Only show if there are shops */}
       {shops.length > 0 && (
         <div className="max-w-2xl">
@@ -108,7 +161,7 @@ const SwitchShop = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Search shops by name, address, or type..."
+              placeholder="Search shops by name or address..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-white"
@@ -147,35 +200,43 @@ const SwitchShop = () => {
       ) : (
         <div className="space-y-4">
           {/* Active Shop Section */}
-          {activeShop && (
+          {currentActiveShop && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-3 border-b border-gray-100">
-                <h2 className="text-xs font-semibold text-gray-950 uppercase tracking-wider">
+              <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
+                <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Current Active Shop
                 </h2>
               </div>
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
-                      <img
-                        src={activeShop.image}
-                        alt={activeShop.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
+                      {currentActiveShop.shop_image_url ? (
+                        <img
+                          src={currentActiveShop.shop_image_url}
+                          alt={currentActiveShop.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                          <Store className="w-6 h-6 text-primary" />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-900">
-                          {activeShop.name}
+                          {currentActiveShop.name}
                         </h3>
                         <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
                           Active
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {activeShop.address}
-                      </p>
+                      {currentActiveShop.address && (
+                        <p className="text-sm text-gray-500 mt-0.5">
+                          {currentActiveShop.address}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <CheckCircle className="w-5 h-5 text-green-500" />
@@ -187,9 +248,9 @@ const SwitchShop = () => {
           {/* Inactive Shops Section */}
           {inactiveShops.length > 0 && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-6 py-3 border-b border-gray-100">
-                <h2 className="text-xs font-semibold text-gray-950 uppercase tracking-wider">
-                  Other Shops
+              <div className="px-6 py-3 border-b border-gray-100 bg-gray-50">
+                <h2 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Other Shops ({inactiveShops.length})
                 </h2>
               </div>
               <div className="divide-y divide-gray-100">
@@ -199,24 +260,32 @@ const SwitchShop = () => {
                     className="px-6 py-4 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-1">
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
-                          <img
-                            src={shop.image}
-                            alt={shop.name}
-                            className="w-full h-full object-cover"
-                          />
+                          {shop.shop_image_url ? (
+                            <img
+                              src={shop.shop_image_url}
+                              alt={shop.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              <Store className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">
                             {shop.name}
                           </h3>
-                          <p className="text-sm text-gray-500">
-                            {shop.address}
-                          </p>
-                          <div className="flex items-center gap-1 mt-1">
+                          {shop.address && (
+                            <p className="text-sm text-gray-500 truncate">
+                              {shop.address}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-gray-400">
-                              Last active: {shop.lastActive}
+                              Created: {new Date(shop.created_at).toLocaleDateString()}
                             </span>
                           </div>
                         </div>
@@ -224,11 +293,18 @@ const SwitchShop = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        icon={<ChevronRight className="w-3 h-3" />}
+                        icon={
+                          switchingShopId === shop.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <ChevronRight className="w-3 h-3" />
+                          )
+                        }
                         onClick={() => handleSwitchShop(shop)}
-                        className="text-xs px-3 py-1.5"
+                        disabled={switchingShopId === shop.id}
+                        className="text-xs px-3 py-1.5 ml-4 flex-shrink-0"
                       >
-                        Switch
+                        {switchingShopId === shop.id ? "Switching..." : "Switch"}
                       </Button>
                     </div>
                   </div>
@@ -268,7 +344,7 @@ const SwitchShop = () => {
             id: 2,
             title: "Select Active Shop",
             description:
-              "Your currently active shop is shown at the top with a green checkmark. Click 'Switch' on any other shop to make it active.",
+              "Your currently active shop is shown at the top with a green checkmark. Click 'Switch' on any other shop to make it active and start managing it.",
             icon: Store,
             iconColor: "text-white",
             bgColor: "bg-primary",
@@ -277,7 +353,7 @@ const SwitchShop = () => {
             id: 3,
             title: "Create New Shop",
             description:
-              "Use the 'Create New Shop' button to add more shops to your account. Each shop can have its own inventory and settings.",
+              "Use the 'Create New Shop' button to add more shops to your account. Each shop can have its own inventory, staff, and settings.",
             icon: Plus,
             iconColor: "text-white",
             bgColor: "bg-primary",

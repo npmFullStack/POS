@@ -14,6 +14,7 @@ import {
   Users,
   X,
   Plus,
+  CheckCircle,
 } from "lucide-react";
 import { authService } from "@/services/auth.service";
 import { shopService } from "@/services/shop.service";
@@ -55,7 +56,23 @@ const ProtectedLayout = () => {
       const shopsResult = await shopService.getAllUserShops(userData.profile.id);
 
       if (shopsResult.success) {
-        const shops = shopsResult.data || [];
+        let shops = shopsResult.data || [];
+        
+        // Get active shop
+        const activeResult = await shopService.getActiveShop(userData.profile.id);
+        let currentActiveShop = null;
+        
+        if (activeResult.success && activeResult.data) {
+          currentActiveShop = activeResult.data;
+          setActiveShop(currentActiveShop);
+          
+          // Reorder shops: active shop first, then others
+          shops = [
+            currentActiveShop,
+            ...shops.filter(shop => shop.id !== currentActiveShop.id)
+          ];
+        }
+        
         setUserShops(shops);
 
         if (shops.length === 0) {
@@ -65,16 +82,24 @@ const ProtectedLayout = () => {
           }
           return;
         }
-
-        const activeResult = await shopService.getActiveShop(userData.profile.id);
-        if (activeResult.success && activeResult.data) {
-          setActiveShop(activeResult.data);
-        }
       }
     }
 
     setLoading(false);
   }, [navigate, location.pathname]);
+
+  // Listen for shop changes
+  useEffect(() => {
+    const handleShopChange = () => {
+      loadUserData();
+    };
+
+    window.addEventListener("shop-changed", handleShopChange);
+    
+    return () => {
+      window.removeEventListener("shop-changed", handleShopChange);
+    };
+  }, [loadUserData]);
 
   useEffect(() => {
     loadUserData();
@@ -102,6 +127,13 @@ const ProtectedLayout = () => {
     shopService.setActiveShop(shop.id);
     setActiveShop(shop);
     setIsShopDropdownOpen(false);
+    
+    // Reorder shops in the dropdown
+    setUserShops(prevShops => [
+      shop,
+      ...prevShops.filter(s => s.id !== shop.id)
+    ]);
+    
     navigate("/dashboard");
   };
 
@@ -200,7 +232,7 @@ const ProtectedLayout = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
       {/* Header */}
-      <header className="bg-white fixed top-0 left-0 right-0 z-30">
+      <header className="bg-white fixed top-0 left-0 right-0 z-30 border-b border-gray-100">
         <div className="px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Desktop sidebar toggle */}
@@ -249,16 +281,17 @@ const ProtectedLayout = () => {
                 className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
-                  <img
-                    src={
-                      activeShop?.shop_image_url ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                        activeShop?.name?.charAt(0) || "S"
-                      )}&background=FF0800&color=fff&size=32`
-                    }
-                    alt={activeShop?.name || "Shop"}
-                    className="w-full h-full object-cover"
-                  />
+                  {activeShop?.shop_image_url ? (
+                    <img
+                      src={activeShop.shop_image_url}
+                      alt={activeShop.name || "Shop"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                      <Store className="w-4 h-4 text-primary" />
+                    </div>
+                  )}
                 </div>
                 <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-32 truncate">
                   {activeShop?.name || "Select Shop"}
@@ -286,20 +319,21 @@ const ProtectedLayout = () => {
                           className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
                         >
                           <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                            <img
-                              src={
-                                shop.shop_image_url ||
-                                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                                  shop.name.charAt(0)
-                                )}&background=FF0800&color=fff&size=24`
-                              }
-                              alt={shop.name}
-                              className="w-full h-full object-cover"
-                            />
+                            {shop.shop_image_url ? (
+                              <img
+                                src={shop.shop_image_url}
+                                alt={shop.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                <Store className="w-3 h-3 text-gray-400" />
+                              </div>
+                            )}
                           </div>
                           <span className="flex-1 truncate font-medium">{shop.name}</span>
                           {activeShop?.id === shop.id && (
-                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                           )}
                         </button>
                       ))}
@@ -374,6 +408,51 @@ const ProtectedLayout = () => {
             </div>
           </div>
 
+          {/* Active Shop Display - Sidebar */}
+          {!hasNoShops && activeShop && (
+            <div
+              className={`p-4 border-b border-gray-100 bg-gray-50 ${
+                !isSidebarOpen && "flex justify-center"
+              }`}
+            >
+              <div
+                className={`flex ${
+                  isSidebarOpen ? "items-center gap-3" : "flex-col items-center"
+                }`}
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                  {activeShop.shop_image_url ? (
+                    <img
+                      src={activeShop.shop_image_url}
+                      alt={activeShop.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                      <Store className="w-4 h-4 text-primary" />
+                    </div>
+                  )}
+                </div>
+                {isSidebarOpen && (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="text-[0.5rem] text-gray-800 font-semibold uppercase">Active Shop</p>
+                      <CheckCircle className="w-3 h-3 text-green-500" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {activeShop.name}
+                    </p>
+                  </div>
+                )}
+                {!isSidebarOpen && (
+                  <div className="mt-1">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Navigation Links */}
           <nav className="p-3">
             <ul className="space-y-1">{navLinks.map(renderNavLink)}</ul>
@@ -426,6 +505,38 @@ const ProtectedLayout = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Active Shop Display - Mobile */}
+              {!hasNoShops && activeShop && (
+                <div className="px-6 pb-4 border-b border-gray-100">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                        {activeShop.shop_image_url ? (
+                          <img
+                            src={activeShop.shop_image_url}
+                            alt={activeShop.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                            <Store className="w-5 h-5 text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs text-gray-500 font-medium">Active Shop</p>
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900 truncate">
+                          {activeShop.name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Navigation Links */}
               <nav className="px-3 pb-4">

@@ -13,6 +13,7 @@ import {
 import Button from "@/components/Button";
 import Select from "@/components/Select";
 import ModalPortal from "@/components/ModalPortal";
+import Info from "@/components/Info";
 
 const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
   const [formData, setFormData] = useState({
@@ -359,15 +360,14 @@ const NewProduct = ({ isOpen, onClose, categories, onCreateProduct }) => {
                 />
               </div>
             </div>
-
             {/* Info Alert */}
-            <div className="bg-red-100 rounded-lg p-3 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-primary">
-                You can always edit product details and manage stock levels
-                later from the inventory.
-              </p>
-            </div>
+            <Info
+              icon={<AlertCircle className="w-4 h-4" />}
+              title="Important"
+              message="You can always edit product details and manage stock levels
+                later from the inventory."
+            />
+
 
             {/* Actions - disabled button when form is incomplete */}
             <div className="sticky bottom-0 bg-white border-t border-gray-100 p-5 -mx-5 px-5 flex justify-end gap-3 mt-5">

@@ -20,7 +20,7 @@ const Info = ({ icon, title, message }) => {
         )}
         <div className="flex-1">
           {title && (
-            <h3 className={`text-md font-bold ${styles.titleColor} mb-1`}>
+            <h3 className={`text-md font-semibold ${styles.titleColor} mb-1`}>
               {title}:
             </h3>
           )}

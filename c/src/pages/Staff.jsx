@@ -1,5 +1,5 @@
 // pages/Staff.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   UserPlus,
@@ -22,6 +22,7 @@ import Button from "@/components/Button";
 import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 import Help from "@/components/modals/Help";
+import NewStaff from "@/components/modals/NewStaff";
 
 // Import help images
 import instructionsImg from "@/assets/images/instructions.png";
@@ -31,58 +32,102 @@ const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showNewStaffModal, setShowNewStaffModal] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState(null);
-
-  const staffData = [
+  const [staffData, setStaffData] = useState([
     {
       id: 1,
+      firstName: "Maria",
+      lastName: "Santos",
       name: "Maria Santos",
       email: "maria.santos@sukipro.com",
       phone: "+63 912 345 6789",
+      username: "maria.santos",
+      password: "******",
       status: "active",
       lastActive: "Today",
+      image: null,
+      role: "admin",
+      createdAt: "2024-01-15",
     },
     {
       id: 2,
+      firstName: "John",
+      lastName: "Reyes",
       name: "John Reyes",
       email: "john.reyes@sukipro.com",
       phone: "+63 923 456 7890",
+      username: "john.reyes",
+      password: "******",
       status: "active",
       lastActive: "Today",
+      image: null,
+      role: "staff",
+      createdAt: "2024-01-20",
     },
     {
       id: 3,
+      firstName: "Anna",
+      lastName: "Cruz",
       name: "Anna Cruz",
       email: "anna.cruz@sukipro.com",
       phone: "+63 934 567 8901",
+      username: "anna.cruz",
+      password: "******",
       status: "active",
       lastActive: "Yesterday",
+      image: null,
+      role: "staff",
+      createdAt: "2024-02-01",
     },
     {
       id: 4,
+      firstName: "Mike",
+      lastName: "Dela Cruz",
       name: "Mike Dela Cruz",
       email: "mike.delacruz@sukipro.com",
       phone: "+63 945 678 9012",
+      username: "mike.delacruz",
+      password: "******",
       status: "inactive",
       lastActive: "3 days ago",
+      image: null,
+      role: "staff",
+      createdAt: "2024-01-10",
     },
     {
       id: 5,
+      firstName: "Sarah",
+      lastName: "Lim",
       name: "Sarah Lim",
       email: "sarah.lim@sukipro.com",
       phone: "+63 956 789 0123",
+      username: "sarah.lim",
+      password: "******",
       status: "active",
       lastActive: "Today",
+      image: null,
+      role: "staff",
+      createdAt: "2024-02-15",
     },
     {
       id: 6,
+      firstName: "Paolo",
+      lastName: "Gomez",
       name: "Paolo Gomez",
       email: "paolo.gomez@sukipro.com",
       phone: "+63 967 890 1234",
+      username: "paolo.gomez",
+      password: "******",
       status: "pending",
       lastActive: "Never",
+      image: null,
+      role: "staff",
+      createdAt: "2024-03-01",
     },
-  ];
+  ]);
+
+  const dropdownRef = useRef(null);
 
   const stats = [
     {
@@ -149,28 +194,65 @@ const Staff = () => {
     }
   };
 
+  const getRoleBadgeColor = (role) => {
+    switch (role) {
+      case "admin":
+        return "bg-purple-100 text-purple-700";
+      case "staff":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   const filteredStaff = staffData.filter((staff) => {
     const matchesSearch =
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase());
+      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.username.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || staff.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
+  const handleCreateStaff = (newStaff) => {
+    setStaffData([...staffData, newStaff]);
+  };
+
   const handleEditStaff = (staff) => {
     console.log("Edit staff:", staff);
     setOpenDropdownId(null);
+    // You can implement edit functionality here
   };
 
   const handleDeleteStaff = (staffId) => {
     if (confirm("Delete this staff member?")) {
-      console.log("Delete staff:", staffId);
+      setStaffData(staffData.filter((staff) => staff.id !== staffId));
     }
     setOpenDropdownId(null);
   };
 
-  // Simplified help slides for Staff Management page - all icons use bg-primary and text-white
+  const handleUpdateStatus = (staffId, newStatus) => {
+    setStaffData(
+      staffData.map((staff) =>
+        staff.id === staffId ? { ...staff, status: newStatus } : staff
+      )
+    );
+    setOpenDropdownId(null);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Simplified help slides for Staff Management page
   const helpSlides = [
     {
       id: 1,
@@ -185,7 +267,7 @@ const Staff = () => {
       id: 2,
       title: "Add Staff Members",
       description:
-        "Click the 'Add Staff Member' button to invite new team members. Fill in their details and send invitation emails.",
+        "Click the 'Add Staff Member' button to invite new team members. Fill in their details including name, contact information, and account credentials.",
       icon: UserPlus,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -194,7 +276,7 @@ const Staff = () => {
       id: 3,
       title: "Search & Filter",
       description:
-        "Use the search bar to find staff by name or email. Filter by status to quickly see active, inactive, or pending staff members.",
+        "Use the search bar to find staff by name, email, or username. Filter by status to quickly see active, inactive, or pending staff members.",
       icon: Search,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -203,16 +285,16 @@ const Staff = () => {
       id: 4,
       title: "Staff Status Indicators",
       description:
-        "Status badges show staff availability: Green for active, Gray for inactive, and Yellow for pending invites.",
+        "Status badges show staff availability: Green for active, Gray for inactive, and Yellow for pending invites. Role badges show admin or staff permissions.",
       icon: UserCheck,
       iconColor: "text-white",
       bgColor: "bg-primary",
     },
     {
       id: 5,
-      title: "Edit & Delete Staff",
+      title: "Manage Staff",
       description:
-        "Click the three dots menu to edit staff information or remove team members from your organization.",
+        "Click the three dots menu to edit staff information, change status, or remove team members from your organization.",
       icon: Edit,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -237,7 +319,7 @@ const Staff = () => {
           <Button
             variant="primary"
             icon={<UserPlus className="w-5 h-5" />}
-            onClick={() => console.log("Add staff member")}
+            onClick={() => setShowNewStaffModal(true)}
           >
             Add Staff Member
           </Button>
@@ -260,7 +342,7 @@ const Staff = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email, or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -288,6 +370,9 @@ const Staff = () => {
                     Contact
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -306,8 +391,16 @@ const Staff = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                          <Users className="w-4 h-4 text-gray-600" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center flex-shrink-0">
+                          {staff.image ? (
+                            <img
+                              src={staff.image}
+                              alt={staff.name}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <Users className="w-4 h-4 text-primary" />
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -324,19 +417,33 @@ const Staff = () => {
                               <div className="w-2 h-2 rounded-full bg-yellow-500 flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 truncate max-w-[180px]">
-                            {staff.email}
+                          <p className="text-xs text-gray-500">
+                            @{staff.username}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Phone className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate max-w-[140px]">
-                          {staff.phone}
-                        </span>
+                      <div className="space-y-1">
+                        <p className="text-sm text-gray-600 truncate max-w-[180px]">
+                          {staff.email}
+                        </p>
+                        {staff.phone && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Phone className="w-3 h-3" />
+                            <span className="truncate max-w-[140px]">
+                              {staff.phone}
+                            </span>
+                          </div>
+                        )}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getRoleBadgeColor(staff.role)}`}
+                      >
+                        <span className="capitalize">{staff.role}</span>
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -358,7 +465,7 @@ const Staff = () => {
                         <button
                           onClick={() =>
                             setOpenDropdownId(
-                              openDropdownId === staff.id ? null : staff.id,
+                              openDropdownId === staff.id ? null : staff.id
                             )
                           }
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -366,17 +473,43 @@ const Staff = () => {
                           <MoreVertical className="w-4 h-4 text-gray-500" />
                         </button>
                         {openDropdownId === staff.id && (
-                          <div className="absolute right-0 mt-1 top-full w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                          <div
+                            ref={dropdownRef}
+                            className="absolute right-0 mt-1 top-full w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10"
+                          >
                             <button
                               onClick={() => handleEditStaff(staff)}
-                              className="w-full px-3 py-1.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                             >
                               <Edit className="w-3.5 h-3.5" />
                               Edit
                             </button>
+                            
+                            {/* Status Change Options */}
+                            {staff.status !== "active" && (
+                              <button
+                                onClick={() => handleUpdateStatus(staff.id, "active")}
+                                className="w-full px-3 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                Set Active
+                              </button>
+                            )}
+                            {staff.status !== "inactive" && (
+                              <button
+                                onClick={() => handleUpdateStatus(staff.id, "inactive")}
+                                className="w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <UserX className="w-3.5 h-3.5" />
+                                Set Inactive
+                              </button>
+                            )}
+                            
+                            <div className="border-t border-gray-100 my-1"></div>
+                            
                             <button
                               onClick={() => handleDeleteStaff(staff.id)}
-                              className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               Delete
@@ -409,7 +542,7 @@ const Staff = () => {
             <Button
               variant="primary"
               icon={<UserPlus className="w-5 h-5" />}
-              onClick={() => console.log("Add staff member")}
+              onClick={() => setShowNewStaffModal(true)}
             >
               {searchTerm || statusFilter !== "all"
                 ? "Clear Filters & Add Staff"
@@ -419,7 +552,14 @@ const Staff = () => {
         )}
       </div>
 
-      {/* Help Modal with slides - All icons use bg-primary and text-white */}
+      {/* New Staff Modal */}
+      <NewStaff
+        isOpen={showNewStaffModal}
+        onClose={() => setShowNewStaffModal(false)}
+        onCreateStaff={handleCreateStaff}
+      />
+
+      {/* Help Modal */}
       <Help
         isOpen={showHelpModal}
         onClose={() => setShowHelpModal(false)}

@@ -1,4 +1,3 @@
-// ProtectedLayout.jsx - Simplified Version
 import React, { useState, useEffect, useCallback } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -42,64 +41,44 @@ const ProtectedLayout = () => {
 
   const loadUserData = useCallback(async () => {
     setLoading(true);
-    
+
     const { success, user: userData } = await authService.getCurrentUser();
 
-    if (success && userData) {
-      setUser(userData);
-
-      if (userData.profile) {
-        const shopsResult = await shopService.getAllUserShops(userData.profile.id);
-        
-        if (shopsResult.success) {
-          setUserShops(shopsResult.data || []);
-          
-          // If no shops exist and not on no-shop page, redirect to no-shop
-          if ((!shopsResult.data || shopsResult.data.length === 0) && location.pathname !== "/no-shop") {
-            setLoading(false);
-            navigate("/no-shop", { replace: true });
-            return;
-          }
-          
-          // Load active shop only if shops exist
-          if (shopsResult.data && shopsResult.data.length > 0) {
-            const activeResult = await shopService.getActiveShop(userData.profile.id);
-            if (activeResult.success && activeResult.data) {
-              setActiveShop(activeResult.data);
-            }
-          }
-        }
-      }
-    } else {
+    if (!success || !userData) {
       navigate("/login");
       return;
     }
-    
+
+    setUser(userData);
+
+    if (userData.profile) {
+      const shopsResult = await shopService.getAllUserShops(userData.profile.id);
+
+      if (shopsResult.success) {
+        const shops = shopsResult.data || [];
+        setUserShops(shops);
+
+        if (shops.length === 0) {
+          setLoading(false);
+          if (location.pathname !== "/no-shop" && location.pathname !== "/create-shop") {
+            navigate("/no-shop", { replace: true });
+          }
+          return;
+        }
+
+        const activeResult = await shopService.getActiveShop(userData.profile.id);
+        if (activeResult.success && activeResult.data) {
+          setActiveShop(activeResult.data);
+        }
+      }
+    }
+
     setLoading(false);
   }, [navigate, location.pathname]);
 
   useEffect(() => {
     loadUserData();
-  }, [loadUserData]);
-
-  // Handle shop events
-  useEffect(() => {
-    const handleShopEvent = () => {
-      loadUserData();
-    };
-
-    window.addEventListener("shop-created", handleShopEvent);
-    window.addEventListener("shop-updated", handleShopEvent);
-    window.addEventListener("shop-deleted", handleShopEvent);
-    window.addEventListener("shop-changed", handleShopEvent);
-
-    return () => {
-      window.removeEventListener("shop-created", handleShopEvent);
-      window.removeEventListener("shop-updated", handleShopEvent);
-      window.removeEventListener("shop-deleted", handleShopEvent);
-      window.removeEventListener("shop-changed", handleShopEvent);
-    };
-  }, [loadUserData]);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     const { success } = await authService.signOut();
@@ -126,7 +105,6 @@ const ProtectedLayout = () => {
     navigate("/dashboard");
   };
 
-  // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -135,66 +113,117 @@ const ProtectedLayout = () => {
     );
   }
 
-  // Check if user has no shops - render simplified layout without sidebar
   const hasNoShops = userShops.length === 0;
+  const isNoShopPage = location.pathname === "/no-shop" || location.pathname === "/create-shop";
 
-  // Simplified layout for users with no shops (including /no-shop route)
-  if (hasNoShops) {
+  // Helper function to render nav links (either active links or disabled based on hasNoShops)
+  const renderNavLink = (link) => {
+    const Icon = link.icon;
+    const isDisabled = hasNoShops;
+
+    if (isDisabled) {
+      return (
+        <li key={link.id}>
+          <span
+            className={`flex items-center ${
+              isSidebarOpen ? "gap-3 px-3" : "justify-center"
+            } py-2.5 rounded-lg text-gray-300 cursor-not-allowed select-none`}
+            title="Create a shop to access this page"
+          >
+            <Icon className={`${isSidebarOpen ? "w-5 h-5" : "w-6 h-6"}`} />
+            {isSidebarOpen && <span className="text-sm font-medium">{link.name}</span>}
+          </span>
+        </li>
+      );
+    }
+
     return (
-      <div className="min-h-screen bg-gray-50 font-poppins">
-        {/* Simple Header without shop dropdown */}
-        <header className="bg-white fixed top-0 left-0 right-0 z-30 shadow-sm">
-          <div className="px-4 h-16 flex items-center justify-between">
-            <div
-              className="flex items-center cursor-pointer"
-              onClick={() => navigate("/dashboard")}
-            >
-              <img src={logo} alt="Suki PRO Logo" className="w-10 h-10" />
-              <span className="text-2xl font-bold text-primary">Suki</span>
-              <span className="text-2xl font-bold text-black">PRO</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Main Content - No sidebar, just the outlet */}
-        <main className="pt-16">
-          <Outlet />
-        </main>
-      </div>
+      <li key={link.id}>
+        <NavLink
+          to={link.path}
+          className={({ isActive }) =>
+            `flex items-center ${
+              isSidebarOpen ? "gap-3 px-3" : "justify-center"
+            } py-2.5 rounded-lg transition-colors ${
+              isActive
+                ? "bg-primary text-white"
+                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+            }`
+          }
+        >
+          <Icon className={`${isSidebarOpen ? "w-5 h-5" : "w-6 h-6"}`} />
+          {isSidebarOpen && <span className="text-sm font-medium">{link.name}</span>}
+        </NavLink>
+      </li>
     );
-  }
+  };
 
-  // Full layout for users with shops
+  // Helper function to render mobile nav links
+  const renderMobileNavLink = (link) => {
+    const Icon = link.icon;
+    const isDisabled = hasNoShops;
+
+    if (isDisabled) {
+      return (
+        <li key={link.id}>
+          <span
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 cursor-not-allowed select-none"
+            title="Create a shop to access this page"
+          >
+            <Icon className="w-5 h-5" />
+            <span className="text-sm font-medium">{link.name}</span>
+          </span>
+        </li>
+      );
+    }
+
+    return (
+      <li key={link.id}>
+        <NavLink
+          to={link.path}
+          onClick={() => setIsMobileMenuOpen(false)}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isActive
+                ? "bg-primary text-white"
+                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
+            }`
+          }
+        >
+          <Icon className="w-5 h-5" />
+          <span className="text-sm font-medium">{link.name}</span>
+        </NavLink>
+      </li>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
       {/* Header */}
-      <header className="bg-white fixed top-0 left-0 right-0 z-30 shadow-sm">
+      <header className="bg-white fixed top-0 left-0 right-0 z-30">
         <div className="px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Desktop sidebar toggle */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="hidden md:block p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
-
+            
+            {/* Mobile menu button */}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={() => setIsMobileMenuOpen(true)}
               className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Menu"
             >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
-
+            
+            {/* Logo */}
             <div
               className="flex items-center cursor-pointer"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate(hasNoShops ? "/no-shop" : "/dashboard")}
             >
               <img src={logo} alt="Suki PRO Logo" className="w-10 h-10" />
               <span className="text-2xl font-bold text-primary">Suki</span>
@@ -202,105 +231,114 @@ const ProtectedLayout = () => {
             </div>
           </div>
 
-          {/* Shop Dropdown */}
-          <div className="relative">
+          {/* Right side actions - Show different based on hasNoShops */}
+          {hasNoShops ? (
+            // Show create shop button when no shops exist
             <button
-              onClick={() => setIsShopDropdownOpen(!isShopDropdownOpen)}
-              className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => navigate("/create-shop")}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 relative">
-                <img
-                  src={
-                    activeShop?.shop_image_url ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(activeShop?.name?.charAt(0) || "S")}&background=FF0800&color=fff`
-                  }
-                  alt={activeShop?.name}
-                  className="w-full h-full object-cover"
-                />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-              </div>
-              <span className="font-medium text-gray-700 hidden sm:block max-w-[150px] truncate">
-                {activeShop?.name}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <Plus className="w-4 h-4" />
+              <span>Create Shop</span>
             </button>
-
-            {isShopDropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsShopDropdownOpen(false)}
-                />
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 border border-gray-200 z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs font-semibold text-gray-500 uppercase">
-                      Your Shops ({userShops.length})
-                    </p>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {userShops.map((shop) => (
-                      <button
-                        key={shop.id}
-                        onClick={() => handleShopSelect(shop)}
-                        className={`w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                          activeShop?.id === shop.id
-                            ? "bg-gray-50 text-gray-900"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                          <img
-                            src={
-                              shop.shop_image_url ||
-                              `https://ui-avatars.com/api/?name=${encodeURIComponent(shop.name.charAt(0))}&background=FF0800&color=fff&size=24`
-                            }
-                            alt={shop.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <span className="flex-1 truncate font-medium">
-                          {shop.name}
-                        </span>
-                        {activeShop?.id === shop.id && (
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-100 mt-2 pt-2">
-                    <button
-                      onClick={handleSwitchShop}
-                      className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Store className="w-4 h-4" />
-                      Switch Shop
-                    </button>
-                    <button
-                      onClick={handleCreateShop}
-                      className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Create New Shop
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logout
-                    </button>
-                  </div>
+          ) : (
+            // Show shop dropdown when shops exist
+            <div className="relative">
+              <button
+                onClick={() => setIsShopDropdownOpen(!isShopDropdownOpen)}
+                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+                  <img
+                    src={
+                      activeShop?.shop_image_url ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        activeShop?.name?.charAt(0) || "S"
+                      )}&background=FF0800&color=fff&size=32`
+                    }
+                    alt={activeShop?.name || "Shop"}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              </>
-            )}
-          </div>
+                <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-32 truncate">
+                  {activeShop?.name || "Select Shop"}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+
+              {isShopDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsShopDropdownOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 w-64 bg-white rounded-xl shadow-lg border border-gray-100 z-20 py-2">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Your Shops
+                      </p>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {userShops.map((shop) => (
+                        <button
+                          key={shop.id}
+                          onClick={() => handleShopSelect(shop)}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                        >
+                          <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                            <img
+                              src={
+                                shop.shop_image_url ||
+                                `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                  shop.name.charAt(0)
+                                )}&background=FF0800&color=fff&size=24`
+                              }
+                              alt={shop.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <span className="flex-1 truncate font-medium">{shop.name}</span>
+                          {activeShop?.id === shop.id && (
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="border-t border-gray-100 mt-2 pt-2">
+                      <button
+                        onClick={handleSwitchShop}
+                        className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Store className="w-4 h-4" />
+                        Switch Shop
+                      </button>
+                      <button
+                        onClick={handleCreateShop}
+                        className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create New Shop
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
       <div className="flex pt-16">
         {/* Sidebar - Desktop */}
         <aside
-          className={`hidden md:block bg-white border-r border-gray-100 transition-all duration-300 ${
+          className={`hidden md:block bg-white transition-all duration-300 ${
             isSidebarOpen ? "w-64" : "w-20"
           }`}
           style={{
@@ -311,9 +349,17 @@ const ProtectedLayout = () => {
             overflowY: "auto",
           }}
         >
-          {/* User Info */}
-          <div className={`p-4 border-b border-gray-100 ${!isSidebarOpen && "text-center"}`}>
-            <div className={`flex ${isSidebarOpen ? "items-center gap-3" : "flex-col items-center"}`}>
+          {/* User Profile Section */}
+          <div
+            className={`p-4 border-b border-gray-100 ${
+              !isSidebarOpen && "text-center"
+            }`}
+          >
+            <div
+              className={`flex ${
+                isSidebarOpen ? "items-center gap-3" : "flex-col items-center"
+              }`}
+            >
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-primary" />
               </div>
@@ -330,32 +376,7 @@ const ProtectedLayout = () => {
 
           {/* Navigation Links */}
           <nav className="p-3">
-            <ul className="space-y-1">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <li key={link.id}>
-                    <NavLink
-                      to={link.path}
-                      className={({ isActive }) =>
-                        `flex items-center ${
-                          isSidebarOpen ? "gap-3 px-3" : "justify-center"
-                        } py-2.5 rounded-lg transition-colors ${
-                          isActive
-                            ? "bg-primary text-white"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-primary"
-                        }`
-                      }
-                    >
-                      <Icon className={`${isSidebarOpen ? "w-5 h-5" : "w-6 h-6"}`} />
-                      {isSidebarOpen && (
-                        <span className="text-sm font-medium">{link.name}</span>
-                      )}
-                    </NavLink>
-                  </li>
-                );
-              })}
-            </ul>
+            <ul className="space-y-1">{navLinks.map(renderNavLink)}</ul>
           </nav>
 
           {/* Logout Button */}
@@ -383,7 +404,7 @@ const ProtectedLayout = () => {
               className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <aside className="md:hidden fixed top-0 left-0 bottom-0 w-80 bg-white z-50 overflow-y-auto shadow-xl">
+            <aside className="md:hidden fixed top-0 left-0 bottom-0 w-80 bg-white z-50 overflow-y-auto">
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -391,6 +412,7 @@ const ProtectedLayout = () => {
                 <X className="w-5 h-5 text-gray-600" />
               </button>
 
+              {/* User Profile */}
               <div className="p-6 pt-16">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -405,32 +427,12 @@ const ProtectedLayout = () => {
                 </div>
               </div>
 
+              {/* Navigation Links */}
               <nav className="px-3 pb-4">
-                <ul className="space-y-1">
-                  {navLinks.map((link) => {
-                    const Icon = link.icon;
-                    return (
-                      <li key={link.id}>
-                        <NavLink
-                          to={link.path}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                              isActive
-                                ? "bg-primary text-white"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-primary"
-                            }`
-                          }
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span className="text-sm font-medium">{link.name}</span>
-                        </NavLink>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <ul className="space-y-1">{navLinks.map(renderMobileNavLink)}</ul>
               </nav>
 
+              {/* Logout Button */}
               <div className="px-3 pb-6">
                 <button
                   onClick={() => {

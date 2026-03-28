@@ -1,5 +1,5 @@
 // components/Toast.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 
@@ -8,181 +8,155 @@ export const ToastContainer = () => {
   return (
     <Toaster
       position="top-right"
+      gutter={8}
       toastOptions={{
         duration: 4000,
         style: {
           padding: '0',
-          borderRadius: '12px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02)',
+          background: 'transparent',
+          boxShadow: 'none',
         },
       }}
     />
   );
 };
 
-// Toast component with progress bar
+const CONFIG = {
+  success: { icon: CheckCircle, color: '#16a34a' },
+  error:   { icon: XCircle,     color: '#dc2626' },
+  warning: { icon: AlertCircle, color: '#d97706' },
+  info:    { icon: Info,        color: '#2563eb' },
+};
+
 const ToastContent = ({ type, message, description, toastId, duration = 4000 }) => {
   const [progress, setProgress] = useState(100);
+  const startTimeRef = useRef();
+  const cfg = CONFIG[type] || CONFIG.info;
+  const Icon = cfg.icon;
 
   useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, ((duration - elapsed) / duration) * 100);
-      setProgress(remaining);
-      
-      if (remaining <= 0) {
-        clearInterval(interval);
-      }
-    }, 16);
-
-    return () => clearInterval(interval);
+    startTimeRef.current = Date.now();
+    let rafId;
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const pct = Math.max(0, ((duration - elapsed) / duration) * 100);
+      setProgress(pct);
+      if (pct > 0) rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [duration]);
 
-  const getStyles = () => {
-    switch (type) {
-      case 'success':
-        return {
-          bg: 'bg-green-500',
-          text: 'text-white',
-          icon: CheckCircle,
-          progressBg: 'bg-green-400',
-        };
-      case 'error':
-        return {
-          bg: 'bg-red-500',
-          text: 'text-white',
-          icon: XCircle,
-          progressBg: 'bg-red-400',
-        };
-      case 'warning':
-        return {
-          bg: 'bg-amber-500',
-          text: 'text-white',
-          icon: AlertCircle,
-          progressBg: 'bg-amber-400',
-        };
-      case 'info':
-        return {
-          bg: 'bg-blue-500',
-          text: 'text-white',
-          icon: Info,
-          progressBg: 'bg-blue-400',
-        };
-      default:
-        return {
-          bg: 'bg-gray-800',
-          text: 'text-white',
-          icon: Info,
-          progressBg: 'bg-gray-600',
-        };
-    }
-  };
-
-  const styles = getStyles();
-  const Icon = styles.icon;
-
   return (
-    <div className="relative overflow-hidden rounded-xl shadow-lg">
-      <div className={`${styles.bg} ${styles.text}`}>
-        <div className="flex items-center gap-3 p-4">
-          <div className="flex-shrink-0">
-            <Icon className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium">{message}</p>
-            {description && (
-              <p className="text-xs opacity-90 mt-0.5">{description}</p>
-            )}
-          </div>
-          <button
-            onClick={() => toast.dismiss(toastId)}
-            className="flex-shrink-0 ml-2 opacity-80 hover:opacity-100 transition-opacity"
-          >
-            <X className="w-4 h-4" />
-          </button>
+    <div style={{
+      width: '320px',
+      background: '#fff',
+      border: '1px solid #e5e7eb',
+      borderRadius: '10px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
+      overflow: 'hidden',
+      animation: 'toastIn 0.22s cubic-bezier(0.34,1.5,0.64,1)',
+    }}>
+      <style>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(12px) scale(0.97); }
+          to   { opacity: 1; transform: translateX(0)   scale(1); }
+        }
+      `}</style>
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '10px 10px 10px 12px',
+      }}>
+        <Icon size={16} color={cfg.color} strokeWidth={2.2} style={{ flexShrink: 0 }} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{
+            margin: 0,
+            fontSize: '13px',
+            fontWeight: '600',
+            color: '#111827',
+            lineHeight: '1.3',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {message}
+          </p>
+          {description && (
+            <p style={{
+              margin: '2px 0 0',
+              fontSize: '11.5px',
+              color: '#6b7280',
+              lineHeight: '1.35',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {description}
+            </p>
+          )}
         </div>
-        
-        {/* Progress Bar */}
-        <div className="h-1 bg-white/30">
-          <div
-            className={`h-full ${styles.progressBg} transition-all duration-75 ease-linear`}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+
+        <button
+          onClick={() => toast.dismiss(toastId)}
+          style={{
+            flexShrink: 0,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '3px',
+            borderRadius: '5px',
+            color: '#9ca3af',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'color 0.15s, background 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#374151'; e.currentTarget.style.background = '#f3f4f6'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent'; }}
+          aria-label="Dismiss"
+        >
+          <X size={13} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ height: '2px', background: '#f3f4f6' }}>
+        <div style={{
+          height: '100%',
+          width: `${progress}%`,
+          background: cfg.color,
+          transition: 'width 75ms linear',
+        }} />
       </div>
     </div>
   );
 };
 
-// Toast utility functions
+const makeToast = (type, defaultDuration) => (message, options = {}) => {
+  const duration = options.duration ?? defaultDuration;
+  toast.custom(
+    (t) => (
+      <ToastContent
+        type={type}
+        message={message}
+        description={options.description}
+        toastId={t.id}
+        duration={duration}
+      />
+    ),
+    { duration }
+  );
+};
+
 export const toastUtils = {
-  success: (message, options = {}) => {
-    toast.custom((t) => (
-      <ToastContent
-        type="success"
-        message={message}
-        description={options.description}
-        toastId={t.id}
-        duration={options.duration || 4000}
-      />
-    ), { duration: options.duration || 4000, ...options });
-  },
-
-  error: (message, options = {}) => {
-    toast.custom((t) => (
-      <ToastContent
-        type="error"
-        message={message}
-        description={options.description}
-        toastId={t.id}
-        duration={options.duration || 5000}
-      />
-    ), { duration: options.duration || 5000, ...options });
-  },
-
-  warning: (message, options = {}) => {
-    toast.custom((t) => (
-      <ToastContent
-        type="warning"
-        message={message}
-        description={options.description}
-        toastId={t.id}
-        duration={options.duration || 4000}
-      />
-    ), { duration: options.duration || 4000, ...options });
-  },
-
-  info: (message, options = {}) => {
-    toast.custom((t) => (
-      <ToastContent
-        type="info"
-        message={message}
-        description={options.description}
-        toastId={t.id}
-        duration={options.duration || 4000}
-      />
-    ), { duration: options.duration || 4000, ...options });
-  },
-
-  promise: (promise, messages, options = {}) => {
-    return toast.promise(promise, {
-      loading: messages.loading || 'Loading...',
-      success: (data) => {
-        if (typeof messages.success === 'function') {
-          return messages.success(data);
-        }
-        return messages.success || 'Success!';
-      },
-      error: (err) => {
-        if (typeof messages.error === 'function') {
-          return messages.error(err);
-        }
-        return messages.error || 'Something went wrong';
-      },
-    }, options);
-  },
-
-  dismiss: toast.dismiss,
+  success: makeToast('success', 4000),
+  error:   makeToast('error',   5000),
+  warning: makeToast('warning', 4000),
+  info:    makeToast('info',    4000),
+  dismiss:    toast.dismiss,
   dismissAll: () => toast.dismiss(),
 };

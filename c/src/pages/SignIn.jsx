@@ -1,3 +1,4 @@
+// SignIn.jsx (updated with toast)
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -11,6 +12,7 @@ import {
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { authService } from "@/services/auth.service";
+import { toastUtils } from "@/components/Toast"; // Import toast utilities
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -22,7 +24,6 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   // Check if user is already logged in
   useEffect(() => {
@@ -39,7 +40,10 @@ const SignIn = () => {
   // Check for success message from signup
   useEffect(() => {
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
+      toastUtils.success("Account created successfully! 🎉", {
+        description: "Please check your email to confirm your account before signing in.",
+        duration: 5000,
+      });
       // Clear the state to prevent showing message on refresh
       window.history.replaceState({}, document.title);
     }
@@ -54,7 +58,6 @@ const SignIn = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setSuccessMessage("");
 
     console.log("Attempting sign in with:", formData.email);
 
@@ -66,10 +69,16 @@ const SignIn = () => {
 
     if (success) {
       console.log("Sign in successful:", data);
+      toastUtils.success("Welcome back!", {
+        description: "You have successfully signed in.",
+      });
       // Navigate to dashboard
       navigate("/dashboard");
     } else {
       console.error("Sign in failed:", signInError);
+      toastUtils.error("Sign in failed", {
+        description: signInError || "Invalid email or password",
+      });
       setError(signInError || "Invalid email or password");
       setLoading(false);
     }
@@ -83,6 +92,9 @@ const SignIn = () => {
       await authService.signInWithGoogle();
 
     if (!success) {
+      toastUtils.error("Google sign in failed", {
+        description: googleError || "Please try again",
+      });
       setError(googleError || "Google sign in failed");
       setLoading(false);
     }
@@ -168,12 +180,6 @@ const SignIn = () => {
                 </Link>
               </p>
             </div>
-
-            {successMessage && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                {successMessage}
-              </div>
-            )}
 
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">

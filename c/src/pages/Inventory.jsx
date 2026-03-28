@@ -30,7 +30,7 @@ import Help from "@/components/modals/Help";
 
 // Import images locally
 import instructionsImg from "@/assets/images/instructions.png";
-import emptyImg from "@/assets/images/empty.png";
+import emptyImg from "@/assets/images/noShop.png";
 
 const Inventory = () => {
   const navigate = useNavigate();

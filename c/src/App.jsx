@@ -1,6 +1,8 @@
+// App.jsx
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoadingPage from "@/pages/LoadingPage";
+import { ToastContainer } from "@/components/Toast"; // Add this import
 
 // Lazy load pages
 const Home = lazy(() => import("@/pages/Home"));
@@ -56,10 +58,11 @@ const App = () => {
               <Route path="/settings" element={<Settings />} />
               <Route path="/switch-shop" element={<SwitchShop />} />
               <Route path="/create-shop" element={<CreateShop />} />
-                            <Route path="/no-shop" element={<NoShop />} />
+              <Route path="/no-shop" element={<NoShop />} />
             </Route>
           </Routes>
         </Suspense>
+        <ToastContainer /> {/* Add ToastContainer here */}
       </div>
     </BrowserRouter>
   );

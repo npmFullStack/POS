@@ -265,14 +265,8 @@ const ProtectedLayout = () => {
 
           {/* Right side actions - Show different based on hasNoShops */}
           {hasNoShops ? (
-            // Show create shop button when no shops exist
-            <button
-              onClick={() => navigate("/create-shop")}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Create Shop</span>
-            </button>
+            // Show message when no shop found
+<div className="text-xs font-medium text-gray-500">No Shop Found</div>
           ) : (
             // Show shop dropdown when shops exist
             <div className="relative">

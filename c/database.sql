@@ -1,8 +1,8 @@
 -- ============================================
--- CLEANUP: Drop all existing policies and tables
+-- CLEANUP: Drop all existing policies and tables safely
 -- ============================================
 
--- Drop storage policies first
+-- Drop storage policies (these are safe even if they don't exist)
 DROP POLICY IF EXISTS "Users can upload shop images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own shop images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own shop images" ON storage.objects;
@@ -17,27 +17,29 @@ DROP POLICY IF EXISTS "Allow users to delete their own files" ON storage.objects
 DROP POLICY IF EXISTS "Enable all operations for authenticated users on shop-images" ON storage.objects;
 DROP POLICY IF EXISTS "Enable read access for all users on shop-images" ON storage.objects;
 
--- Drop table policies
-DROP POLICY IF EXISTS "Users can view their own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can insert their own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can view their own shops" ON public.shops;
-DROP POLICY IF EXISTS "Users can insert their own shops" ON public.shops;
-DROP POLICY IF EXISTS "Users can update their own shops" ON public.shops;
-DROP POLICY IF EXISTS "Users can delete their own shops" ON public.shops;
+-- Drop triggers - only if tables exist
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users' AND table_schema = 'public') THEN
+        DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shops' AND table_schema = 'public') THEN
+        DROP TRIGGER IF EXISTS update_shops_updated_at ON public.shops;
+    END IF;
+END $$;
 
--- Drop triggers
-DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
-DROP TRIGGER IF EXISTS update_shops_updated_at ON public.shops;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
 -- Drop functions
 DROP FUNCTION IF EXISTS update_updated_at_column();
 DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.get_user_id_from_auth_id();
+DROP FUNCTION IF EXISTS public.check_file_ownership(text);
 
--- Drop tables (in correct order to avoid foreign key violations)
-DROP TABLE IF EXISTS public.shops;
-DROP TABLE IF EXISTS public.users;
+-- Drop tables with CASCADE
+DROP TABLE IF EXISTS public.shops CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
 
 -- ============================================
 -- DATABASE SCHEMA SETUP
@@ -47,7 +49,7 @@ DROP TABLE IF EXISTS public.users;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Users table (extends Supabase auth.users)
-CREATE TABLE IF NOT EXISTS public.users (
+CREATE TABLE public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
     email TEXT UNIQUE NOT NULL,
@@ -59,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 -- Shops table
-CREATE TABLE IF NOT EXISTS public.shops (
+CREATE TABLE public.shops (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     address TEXT NOT NULL,
@@ -152,6 +154,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger to automatically create user profile on signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
@@ -165,9 +168,9 @@ INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 VALUES (
     'shop-images', 
     'shop-images', 
-    true,  -- public bucket
-    5242880,  -- 5MB limit (5 * 1024 * 1024)
-    ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']::text[]  -- allowed mime types
+    true,
+    5242880,
+    ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']::text[]
 )
 ON CONFLICT (id) DO UPDATE SET
     public = true,
@@ -175,11 +178,10 @@ ON CONFLICT (id) DO UPDATE SET
     allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif']::text[];
 
 -- ============================================
--- STORAGE POLICIES (Working Version)
+-- STORAGE POLICIES
 -- ============================================
 
--- Policy 1: Allow authenticated users to upload ANY file to shop-images bucket
--- This uses a simple check without owner restrictions for uploads
+-- Policy 1: Allow authenticated users to upload
 CREATE POLICY "Allow authenticated users to upload images"
 ON storage.objects
 FOR INSERT
@@ -188,8 +190,7 @@ WITH CHECK (
     AND bucket_id = 'shop-images'
 );
 
--- Policy 2: Allow users to update their own files based on folder name
--- This checks that the first folder in the path matches their user ID
+-- Policy 2: Allow users to update their own files
 CREATE POLICY "Allow users to update their own images"
 ON storage.objects
 FOR UPDATE
@@ -199,7 +200,7 @@ USING (
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Policy 3: Allow users to delete their own files based on folder name
+-- Policy 3: Allow users to delete their own files
 CREATE POLICY "Allow users to delete their own images"
 ON storage.objects
 FOR DELETE
@@ -209,17 +210,17 @@ USING (
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Policy 4: Allow public to view all images in shop-images bucket
+-- Policy 4: Allow public to view all images
 CREATE POLICY "Allow public to view images"
 ON storage.objects
 FOR SELECT
 USING (bucket_id = 'shop-images');
 
 -- ============================================
--- ADDITIONAL HELPER FUNCTIONS
+-- HELPER FUNCTIONS
 -- ============================================
 
--- Function to get user ID from auth ID (useful for RLS)
+-- Function to get user ID from auth ID
 CREATE OR REPLACE FUNCTION public.get_user_id_from_auth_id()
 RETURNS UUID AS $$
     SELECT id FROM public.users WHERE auth_id = auth.uid();
@@ -243,7 +244,7 @@ FROM information_schema.tables
 WHERE table_schema = 'public' 
 AND table_name IN ('users', 'shops');
 
--- Check if storage bucket was created with correct settings
+-- Check if storage bucket was created
 SELECT 
     id, 
     name, 
@@ -252,37 +253,3 @@ SELECT
     allowed_mime_types 
 FROM storage.buckets 
 WHERE id = 'shop-images';
-
--- Check storage policies
-SELECT 
-    schemaname,
-    tablename,
-    policyname,
-    permissive,
-    roles,
-    cmd,
-    qual,
-    with_check
-FROM pg_policies 
-WHERE tablename = 'objects' 
-AND schemaname = 'storage'
-ORDER BY policyname;
-
--- Check if RLS is enabled on storage.objects
-SELECT 
-    relname as table_name,
-    relrowsecurity as rls_enabled
-FROM pg_class
-WHERE relname = 'objects'
-AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'storage');
-
--- Check if all required tables exist
-SELECT 
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users' AND table_schema = 'public') as users_table_exists,
-    EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shops' AND table_schema = 'public') as shops_table_exists;
-
--- Count existing shops (should be 0 after cleanup)
-SELECT COUNT(*) as shop_count FROM public.shops;
-
--- Count existing users (should be based on your auth users)
-SELECT COUNT(*) as user_count FROM public.users;

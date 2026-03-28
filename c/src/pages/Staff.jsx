@@ -26,7 +26,7 @@ import NewStaff from "@/components/modals/NewStaff";
 
 // Import help images
 import instructionsImg from "@/assets/images/instructions.png";
-import emptyImg from "@/assets/images/empty.png";
+import emptyImg from "@/assets/images/noShop.png";
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");

@@ -32,7 +32,7 @@ import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 
 // Import empty image
-import emptyImg from "@/assets/images/empty.png";
+import emptyImg from "@/assets/images/noShop.png";
 
 const Sales = () => {
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,13 +1,14 @@
+// SignUp.jsx
 import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, CheckCircle, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { authService } from "@/services/auth.service";
+import { toastUtils } from "@/components/Toast"; // Import toast utilities
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -18,12 +19,9 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -31,17 +29,20 @@ const SignUp = () => {
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      toastUtils.error("Passwords do not match", {
+        description: "Please make sure your passwords match",
+      });
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+      toastUtils.error("Password too short", {
+        description: "Password must be at least 6 characters",
+      });
       return;
     }
 
     setLoading(true);
-    setError("");
 
     const result = await authService.signUp(
       formData.email,
@@ -51,27 +52,30 @@ const SignUp = () => {
     );
 
     if (result.success) {
-      // Show success message
-      setShowSuccess(true);
-      // Clear form
-      setFormData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
+      // Show success toast
+      toastUtils.success("Account created successfully! 🎉", {
+        description: "Welcome to SukiPRO! Redirecting to dashboard...",
+        duration: 3000,
       });
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        navigate("/login", {
-          state: {
-            message:
-              "Account created successfully! Please check your email to confirm your account before signing in.",
-          },
-        });
-      }, 3000);
+      
+      // Try to sign in automatically after signup
+      const signInResult = await authService.signIn(formData.email, formData.password);
+      
+      if (signInResult.success) {
+        // Navigate to dashboard after successful auto-login
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        // If auto-login fails, still try to go to dashboard or show appropriate message
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      }
     } else {
-      setError(result.error || "Failed to create account");
+      toastUtils.error("Failed to create account", {
+        description: result.error || "Please try again with a different email",
+      });
       setLoading(false);
     }
   };
@@ -82,9 +86,12 @@ const SignUp = () => {
       await authService.signInWithGoogle();
 
     if (!success) {
-      setError(googleError || "Google sign in failed");
+      toastUtils.error("Google sign in failed", {
+        description: googleError || "Please try again",
+      });
       setLoading(false);
     }
+    // Google sign in will redirect, so no need to handle navigation here
   };
 
   return (
@@ -141,24 +148,6 @@ const SignUp = () => {
                 </Link>
               </p>
             </div>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                {error}
-              </div>
-            )}
-
-            {showSuccess && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                <div className="font-semibold mb-1">
-                  Account created successfully! 🎉
-                </div>
-                <div>
-                  Please check your email to confirm your account. You'll be
-                  redirected to the login page in a moment.
-                </div>
-              </div>
-            )}
 
             {/* Google Button */}
             <button

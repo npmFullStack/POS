@@ -70,67 +70,107 @@ export const shopService = {
   /**
    * Get all user shops (raw data without active flag)
    */
-  async getAllUserShops(userId) {
-    try {
-      const { data, error } = await supabase
-        .from("shops")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error("Get all user shops error:", error);
-      return { success: false, error: error.message };
+  // shop.service.js - Update getAllUserShops method
+async getAllUserShops(userIdentifier) {
+  try {
+    // Determine if we have an auth_id or users table ID
+    let userId = userIdentifier;
+    
+    // If the identifier is an auth_id, convert to user ID
+    if (userIdentifier && typeof userIdentifier === 'string') {
+      const { data: userRecord, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_id", userIdentifier)
+        .single();
+      
+      if (!userError && userRecord) {
+        userId = userRecord.id;
+      }
     }
-  },
+
+    const { data, error } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Get all user shops error:", error);
+    return { success: false, error: error.message };
+  }
+},
 
   /**
    * Get active shop
    */
-  async getActiveShop(userId) {
-    try {
-      const activeShopId = localStorage.getItem("activeShopId");
+  // shop.service.js - Update getActiveShop method
+async getActiveShop(userIdentifier) {
+  try {
+    const activeShopId = localStorage.getItem("activeShopId");
 
-      if (!activeShopId) {
-        // Get first shop if no active shop set
-        const { data: shops, error: shopsError } = await supabase
-          .from("shops")
-          .select("*")
-          .eq("user_id", userId)
-          .limit(1);
-
-        if (shopsError) throw shopsError;
-
-        if (shops && shops.length > 0) {
-          localStorage.setItem("activeShopId", shops[0].id);
-          return { success: true, data: shops[0] };
-        }
-        return { success: true, data: null };
+    // Determine if we have an auth_id or users table ID
+    let userId = userIdentifier;
+    
+    // If the identifier is an auth_id (starts with UUID format but might be from auth), 
+    // we need to get the actual user ID from users table
+    if (userIdentifier && typeof userIdentifier === 'string') {
+      // Try to see if this is an auth_id by checking if it exists in users table as auth_id
+      const { data: userRecord, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_id", userIdentifier)
+        .single();
+      
+      if (!userError && userRecord) {
+        userId = userRecord.id;
+        console.log("Converted auth_id to user ID:", userId);
+      } else {
+        // If not found as auth_id, assume it's already the user ID
+        console.log("Using provided ID as user ID:", userId);
       }
+    }
 
-      const { data, error } = await supabase
+    if (!activeShopId) {
+      // Get first shop if no active shop set
+      const { data: shops, error: shopsError } = await supabase
         .from("shops")
         .select("*")
-        .eq("id", activeShopId)
         .eq("user_id", userId)
-        .single();
+        .limit(1);
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (shopsError) throw shopsError;
 
-      if (!data) {
-        // If shop doesn't exist or doesn't belong to user, clear storage
-        localStorage.removeItem("activeShopId");
-        return this.getActiveShop(userId);
+      if (shops && shops.length > 0) {
+        localStorage.setItem("activeShopId", shops[0].id);
+        return { success: true, data: shops[0] };
       }
-
-      return { success: true, data };
-    } catch (error) {
-      console.error("Get active shop error:", error);
-      return { success: false, error: error.message };
+      return { success: true, data: null };
     }
-  },
+
+    const { data, error } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("id", activeShopId)
+      .eq("user_id", userId)
+      .single();
+
+    if (error && error.code !== "PGRST116") throw error;
+
+    if (!data) {
+      // If shop doesn't exist or doesn't belong to user, clear storage
+      localStorage.removeItem("activeShopId");
+      return this.getActiveShop(userId);
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Get active shop error:", error);
+    return { success: false, error: error.message };
+  }
+},
 
   /**
    * Set active shop

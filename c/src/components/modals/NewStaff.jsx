@@ -19,13 +19,11 @@ import Info from "@/components/Info";
 
 const NewStaff = ({ isOpen, onClose, onCreateStaff }) => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
+    fullName: "",
     username: "",
     password: "",
     confirmPassword: "",
-    role: "staff",
+    phone: "",
     image: null,
     imagePreview: null,
   });
@@ -93,15 +91,12 @@ const NewStaff = ({ isOpen, onClose, onCreateStaff }) => {
     }
 
     const newStaff = {
-      id: Date.now(),
-      ...formData,
-      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      fullName: formData.fullName,
+      username: formData.username,
+      password: formData.password,
+      phone: formData.phone,
+      profileImageUrl: formData.imagePreview,
       status: "active",
-      lastActive: "Just now",
-      createdAt: new Date().toISOString().split("T")[0],
-      image: formData.imagePreview,
-      // Remove confirmPassword from the final object
-      confirmPassword: undefined,
     };
     
     onCreateStaff(newStaff);
@@ -109,13 +104,11 @@ const NewStaff = ({ isOpen, onClose, onCreateStaff }) => {
     
     // Reset form
     setFormData({
-      firstName: "",
-      lastName: "",
-      phone: "",
+      fullName: "",
       username: "",
       password: "",
       confirmPassword: "",
-      role: "staff",
+      phone: "",
       image: null,
       imagePreview: null,
     });
@@ -126,8 +119,7 @@ const NewStaff = ({ isOpen, onClose, onCreateStaff }) => {
 
   const isFormValid = () => {
     return (
-      formData.firstName.trim() !== "" &&
-      formData.lastName.trim() !== "" &&
+      formData.fullName.trim() !== "" &&
       formData.username.trim() !== "" &&
       formData.password.trim() !== "" &&
       formData.confirmPassword.trim() !== "" &&
@@ -221,64 +213,41 @@ const NewStaff = ({ isOpen, onClose, onCreateStaff }) => {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 Personal Information
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                    First Name <span className="text-red-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
-                      name="firstName"
-                      value={formData.firstName}
+                      name="fullName"
+                      value={formData.fullName}
                       onChange={handleChange}
                       className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
-                      placeholder="Enter first name"
+                      placeholder="Enter full name"
                       required
                       autoFocus
                     />
                   </div>
                 </div>
+                
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                    Last Name <span className="text-red-500">*</span>
+                    Contact Number
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
-                      type="text"
-                      name="lastName"
-                      value={formData.lastName}
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
                       className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
-                      placeholder="Enter last name"
-                      required
+                      placeholder="Optional"
                     />
                   </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                Contact Information
-              </h3>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                  Contact Number
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-0"
-                    placeholder="Optional"
-                  />
                 </div>
               </div>
             </div>

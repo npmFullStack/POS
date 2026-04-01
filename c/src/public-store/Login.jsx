@@ -1,37 +1,62 @@
 // public-store/Login.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingBag, LogIn } from "lucide-react";
+import { ShoppingBag, LogIn, Store } from "lucide-react";
+import { staffService } from "@/services/staff.service";
+import { shopService } from "@/services/shop.service";
 
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [shopId, setShopId] = useState("");
+  const [shops, setShops] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Simple hardcoded credentials for demo
-  const validCredentials = {
-    username: "nors",
-    password: "nors123",
+  // Load shops for the logged-in owner
+  useEffect(() => {
+    loadShops();
+  }, []);
+
+  const loadShops = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const result = await shopService.getAllUserShops(userData.user.id);
+        if (result.success && result.data.length > 0) {
+          setShops(result.data);
+          setShopId(result.data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading shops:", error);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Simulate login check
-    setTimeout(() => {
-      if (username === validCredentials.username && password === validCredentials.password) {
-        localStorage.setItem("publicStoreAuth", "true");
-        localStorage.setItem("publicStoreUser", username);
-        navigate("/public-store/home");
-      } else {
-        setError("Invalid username or password");
-      }
+    if (!shopId) {
+      setError("Please select a shop");
       setLoading(false);
-    }, 500);
+      return;
+    }
+
+    const result = await staffService.authenticateStaff(username, password, shopId);
+
+    if (result.success) {
+      localStorage.setItem("publicStoreAuth", "true");
+      localStorage.setItem("publicStoreUser", result.data.full_name);
+      localStorage.setItem("publicStoreStaffId", result.data.id);
+      localStorage.setItem("publicStoreShopId", result.data.shop_id);
+      navigate("/public-store/home");
+    } else {
+      setError(result.error || "Invalid username or password");
+    }
+    setLoading(false);
   };
 
   return (
@@ -42,7 +67,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center mb-4">
             <img 
               src="/shop.png" 
-              alt="Nors Shop" 
+              alt="Store" 
               className="w-16 h-16 object-contain"
               onError={(e) => {
                 e.target.onerror = null;
@@ -50,8 +75,8 @@ const Login = () => {
               }}
             />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Nors</h1>
-          <p className="text-gray-500 mt-2">Sign in to your account</p>
+          <h1 className="text-3xl font-bold text-gray-900">Staff Login</h1>
+          <p className="text-gray-500 mt-2">Sign in to your store account</p>
         </div>
 
         {/* Login Form */}
@@ -60,6 +85,30 @@ const Login = () => {
             {error && (
               <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
                 {error}
+              </div>
+            )}
+
+            {/* Shop Selection */}
+            {shops.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Shop <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Store className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={shopId}
+                    onChange={(e) => setShopId(e.target.value)}
+                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0800] focus:border-transparent transition-all appearance-none bg-white"
+                    required
+                  >
+                    {shops.map((shop) => (
+                      <option key={shop.id} value={shop.id}>
+                        {shop.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             )}
 
@@ -115,12 +164,6 @@ const Login = () => {
               )}
             </button>
           </form>
-
-          {/* Demo Credentials Hint */}
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Demo Credentials:</p>
-            <p className="font-mono text-xs">Username: nors | Password: nors123</p>
-          </div>
         </div>
       </div>
     </div>

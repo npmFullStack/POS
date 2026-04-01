@@ -23,7 +23,11 @@ import Select from "@/components/Select";
 import StatCard from "@/components/StatCard";
 import Help from "@/components/modals/Help";
 import NewStaff from "@/components/modals/NewStaff";
-
+import { staffService } from "@/services/staff.service";
+import { shopService } from "@/services/shop.service";
+import { authService } from "@/services/auth.service"; // Add this import
+import { toastUtils } from "@/components/Toast";
+import { supabase } from "@/lib/supabase"; 
 // Import help images
 import instructionsImg from "@/assets/images/instructions.png";
 import emptyImg from "@/assets/images/noShop.png";
@@ -34,98 +38,10 @@ const Staff = () => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showNewStaffModal, setShowNewStaffModal] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [staffData, setStaffData] = useState([
-    {
-      id: 1,
-      firstName: "Maria",
-      lastName: "Santos",
-      name: "Maria Santos",
-      email: "maria.santos@sukipro.com",
-      phone: "+63 912 345 6789",
-      username: "maria.santos",
-      password: "******",
-      status: "active",
-      lastActive: "Today",
-      image: null,
-      role: "admin",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: 2,
-      firstName: "John",
-      lastName: "Reyes",
-      name: "John Reyes",
-      email: "john.reyes@sukipro.com",
-      phone: "+63 923 456 7890",
-      username: "john.reyes",
-      password: "******",
-      status: "active",
-      lastActive: "Today",
-      image: null,
-      role: "staff",
-      createdAt: "2024-01-20",
-    },
-    {
-      id: 3,
-      firstName: "Anna",
-      lastName: "Cruz",
-      name: "Anna Cruz",
-      email: "anna.cruz@sukipro.com",
-      phone: "+63 934 567 8901",
-      username: "anna.cruz",
-      password: "******",
-      status: "active",
-      lastActive: "Yesterday",
-      image: null,
-      role: "staff",
-      createdAt: "2024-02-01",
-    },
-    {
-      id: 4,
-      firstName: "Mike",
-      lastName: "Dela Cruz",
-      name: "Mike Dela Cruz",
-      email: "mike.delacruz@sukipro.com",
-      phone: "+63 945 678 9012",
-      username: "mike.delacruz",
-      password: "******",
-      status: "inactive",
-      lastActive: "3 days ago",
-      image: null,
-      role: "staff",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: 5,
-      firstName: "Sarah",
-      lastName: "Lim",
-      name: "Sarah Lim",
-      email: "sarah.lim@sukipro.com",
-      phone: "+63 956 789 0123",
-      username: "sarah.lim",
-      password: "******",
-      status: "active",
-      lastActive: "Today",
-      image: null,
-      role: "staff",
-      createdAt: "2024-02-15",
-    },
-    {
-      id: 6,
-      firstName: "Paolo",
-      lastName: "Gomez",
-      name: "Paolo Gomez",
-      email: "paolo.gomez@sukipro.com",
-      phone: "+63 967 890 1234",
-      username: "paolo.gomez",
-      password: "******",
-      status: "pending",
-      lastActive: "Never",
-      image: null,
-      role: "staff",
-      createdAt: "2024-03-01",
-    },
-  ]);
+  const [staffData, setStaffData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeShop, setActiveShop] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const dropdownRef = useRef(null);
 
@@ -134,29 +50,27 @@ const Staff = () => {
       id: 1,
       title: "Total Staff",
       value: staffData.length,
-      change: "+12%",
-      changeType: "increase",
-      changeMessage: "+12% vs last month",
+      change: "+0%",
+      changeType: "neutral",
+      changeMessage: "Total staff members",
       icon: Users,
     },
     {
       id: 2,
       title: "Active Staff",
       value: staffData.filter((s) => s.status === "active").length,
-      change: "+2",
+      change: "+0",
       changeType: "increase",
-      changeMessage: "+2 this month",
+      changeMessage: "Active staff members",
       icon: CheckCircle,
     },
     {
       id: 3,
       title: "Inactive Staff",
       value: staffData.filter((s) => s.status === "inactive").length,
-      change: "1",
+      change: "0",
       changeType: "neutral",
-      changeMessage:
-        staffData.filter((s) => s.status === "inactive").length +
-        " inactive staff",
+      changeMessage: "Inactive staff members",
       icon: XCircle,
       alert: true,
       alertMessage: "Inactive staff members need attention",
@@ -194,29 +108,123 @@ const Staff = () => {
     }
   };
 
-  const getRoleBadgeColor = (role) => {
-    switch (role) {
-      case "admin":
-        return "bg-purple-100 text-purple-700";
-      case "staff":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+  // Load staff data when component mounts or shop changes
+  useEffect(() => {
+    loadStaffData();
+    
+    // Listen for shop changes
+    const handleShopChange = () => {
+      console.log("Shop changed, reloading staff data...");
+      loadStaffData();
+    };
+    
+    window.addEventListener("shop-changed", handleShopChange);
+    return () => window.removeEventListener("shop-changed", handleShopChange);
+  }, []);
+
+  const loadStaffData = async () => {
+    setLoading(true);
+    try {
+      console.log("Loading staff data...");
+      
+      // Get current user from auth
+      const { success, user } = await authService.getCurrentUser();
+      if (!success || !user) {
+        console.error("No authenticated user found");
+        toastUtils.error("Please sign in to view staff");
+        setLoading(false);
+        return;
+}
+      
+      console.log("Current auth user:", user);
+      
+      // Get the actual user ID from the users table
+      let userId = null;
+      
+      if (user.profile && user.profile.id) {
+        // If profile exists, use that ID
+        userId = user.profile.id;
+        console.log("Using profile ID:", userId);
+      } else {
+const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("auth_id", user.id)
+          .single();
+        
+        if (userError) {
+          console.error("Error fetching user record:", userError);
+          toastUtils.error("User profile not found. Please contact support.");
+          setLoading(false);
+          return;
+        }
+userId = userData.id;
+        console.log("Fetched user ID from users table:", userId);
+      }
+      
+      setCurrentUser({ ...user, profileId: userId });
+      
+      // Get active shop using the correct user ID
+      const activeResult = await shopService.getActiveShop(userId);
+      console.log("Active shop result:", activeResult);if (activeResult.success && activeResult.data) {
+        setActiveShop(activeResult.data);
+        console.log("Active shop found:", activeResult.data);
+        
+        // Load staff for this shop
+        const staffResult = await staffService.getShopStaff(activeResult.data.id);
+        console.log("Staff result:", staffResult);
+        
+        if (staffResult.success) {
+          setStaffData(staffResult.data);
+console.log("Staff data loaded:", staffResult.data.length, "members");
+        } else {
+          console.error("Failed to load staff:", staffResult.error);
+          toastUtils.error("Failed to load staff data");
+          setStaffData([]);
+        }
+      } else {
+        console.log("No active shop found");
+        setActiveShop(null);
+        setStaffData([]);
+toastUtils.info("Please create a shop first to manage staff");
+      }
+    } catch (error) {
+      console.error("Error loading staff:", error);
+      toastUtils.error("Failed to load staff data");
+      setStaffData([]);
+    } finally {
+      setLoading(false);
     }
   };
 
+
   const filteredStaff = staffData.filter((staff) => {
     const matchesSearch =
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.username.toLowerCase().includes(searchTerm.toLowerCase());
+      staff.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      staff.username?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || staff.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const handleCreateStaff = (newStaff) => {
-    setStaffData([...staffData, newStaff]);
+  const handleCreateStaff = async (newStaff) => {
+    if (!activeShop) {
+      toastUtils.error("No active shop selected. Please select or create a shop first.");
+      return;
+    }
+    
+    console.log("Creating staff for shop:", activeShop.id, activeShop.name);
+    
+    const result = await staffService.createStaff(newStaff, activeShop.id);
+    if (result.success) {
+      await loadStaffData(); // Reload staff data
+      toastUtils.success("Staff member added successfully!");
+    } else {
+      toastUtils.error("Failed to add staff member", {
+        description: result.error,
+      });
+    }
   };
 
   const handleEditStaff = (staff) => {
@@ -225,19 +233,31 @@ const Staff = () => {
     // You can implement edit functionality here
   };
 
-  const handleDeleteStaff = (staffId) => {
-    if (confirm("Delete this staff member?")) {
-      setStaffData(staffData.filter((staff) => staff.id !== staffId));
+  const handleDeleteStaff = async (staffId) => {
+    if (window.confirm("Delete this staff member?")) {
+      const result = await staffService.deleteStaff(staffId);
+      if (result.success) {
+        await loadStaffData(); // Reload staff data
+        toastUtils.success("Staff member deleted successfully!");
+      } else {
+        toastUtils.error("Failed to delete staff member", {
+          description: result.error,
+        });
+      }
     }
     setOpenDropdownId(null);
   };
 
-  const handleUpdateStatus = (staffId, newStatus) => {
-    setStaffData(
-      staffData.map((staff) =>
-        staff.id === staffId ? { ...staff, status: newStatus } : staff
-      )
-    );
+  const handleUpdateStatus = async (staffId, newStatus) => {
+    const result = await staffService.updateStaffStatus(staffId, newStatus);
+    if (result.success) {
+      await loadStaffData(); // Reload staff data
+      toastUtils.success(`Staff status updated to ${newStatus}!`);
+    } else {
+      toastUtils.error("Failed to update staff status", {
+        description: result.error,
+      });
+    }
     setOpenDropdownId(null);
   };
 
@@ -267,7 +287,7 @@ const Staff = () => {
       id: 2,
       title: "Add Staff Members",
       description:
-        "Click the 'Add Staff Member' button to invite new team members. Fill in their details including name, contact information, and account credentials.",
+        "Click the 'Add Staff Member' button to invite new team members. Fill in their details including name, username, and password.",
       icon: UserPlus,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -276,7 +296,7 @@ const Staff = () => {
       id: 3,
       title: "Search & Filter",
       description:
-        "Use the search bar to find staff by name, email, or username. Filter by status to quickly see active, inactive, or pending staff members.",
+        "Use the search bar to find staff by name or username. Filter by status to quickly see active, inactive, or pending staff members.",
       icon: Search,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -285,7 +305,7 @@ const Staff = () => {
       id: 4,
       title: "Staff Status Indicators",
       description:
-        "Status badges show staff availability: Green for active, Gray for inactive, and Yellow for pending invites. Role badges show admin or staff permissions.",
+        "Status badges show staff availability: Green for active, Gray for inactive, and Yellow for pending invites.",
       icon: UserCheck,
       iconColor: "text-white",
       bgColor: "bg-primary",
@@ -300,6 +320,39 @@ const Staff = () => {
       bgColor: "bg-primary",
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show message if no active shop
+  if (!activeShop) {
+    return (
+      <div className="text-center py-16 px-4">
+        <img
+          src={emptyImg}
+          alt="No shop found"
+          className="w-48 h-48 mx-auto mb-6 opacity-80"
+        />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No Active Shop Found
+        </h3>
+        <p className="text-gray-500 mb-6 max-w-sm mx-auto">
+          Please select or create a shop first to manage staff members.
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => window.location.href = "/switch-shop"}
+        >
+          Switch or Create Shop
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -342,7 +395,7 @@ const Staff = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name, email, or username..."
+                placeholder="Search by name or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -370,9 +423,6 @@ const Staff = () => {
                     Contact
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="text-left px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -395,7 +445,7 @@ const Staff = () => {
                           {staff.image ? (
                             <img
                               src={staff.image}
-                              alt={staff.name}
+                              alt={staff.fullName || staff.name}
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
@@ -405,7 +455,7 @@ const Staff = () => {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-gray-900 truncate max-w-[150px]">
-                              {staff.name}
+                              {staff.fullName || staff.name}
                             </p>
                             {staff.status === "active" && (
                               <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
@@ -425,9 +475,6 @@ const Staff = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        <p className="text-sm text-gray-600 truncate max-w-[180px]">
-                          {staff.email}
-                        </p>
                         {staff.phone && (
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <Phone className="w-3 h-3" />
@@ -436,14 +483,10 @@ const Staff = () => {
                             </span>
                           </div>
                         )}
+                        {!staff.phone && (
+                          <span className="text-xs text-gray-400">No phone</span>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getRoleBadgeColor(staff.role)}`}
-                      >
-                        <span className="capitalize">{staff.role}</span>
-                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span

@@ -27,6 +27,10 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'shops' AND table_schema = 'public') THEN
         DROP TRIGGER IF EXISTS update_shops_updated_at ON public.shops;
     END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'staffs' AND table_schema = 'public') THEN
+        DROP TRIGGER IF EXISTS update_staffs_updated_at ON public.staffs;
+    END IF;
 END $$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -36,8 +40,10 @@ DROP FUNCTION IF EXISTS update_updated_at_column();
 DROP FUNCTION IF EXISTS public.handle_new_user();
 DROP FUNCTION IF EXISTS public.get_user_id_from_auth_id();
 DROP FUNCTION IF EXISTS public.check_file_ownership(text);
+DROP FUNCTION IF EXISTS public.authenticate_staff(text, text, uuid);
 
 -- Drop tables with CASCADE
+DROP TABLE IF EXISTS public.staffs CASCADE;
 DROP TABLE IF EXISTS public.shops CASCADE;
 DROP TABLE IF EXISTS public.users CASCADE;
 
@@ -72,9 +78,27 @@ CREATE TABLE public.shops (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Staffs table (for store staff members)
+CREATE TABLE public.staffs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    shop_id UUID NOT NULL REFERENCES public.shops(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    phone TEXT,
+    profile_image_url TEXT,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'pending')),
+    last_active TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_shops_user_id ON public.shops(user_id);
 CREATE INDEX IF NOT EXISTS idx_users_auth_id ON public.users(auth_id);
+CREATE INDEX IF NOT EXISTS idx_staffs_shop_id ON public.staffs(shop_id);
+CREATE INDEX IF NOT EXISTS idx_staffs_username ON public.staffs(username);
+CREATE INDEX IF NOT EXISTS idx_staffs_status ON public.staffs(status);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -96,9 +120,15 @@ CREATE TRIGGER update_shops_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_staffs_updated_at 
+    BEFORE UPDATE ON public.staffs 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
 -- Enable Row Level Security (RLS) for tables
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staffs ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- RLS POLICIES FOR TABLES
@@ -134,6 +164,27 @@ CREATE POLICY "Users can delete their own shops"
     ON public.shops FOR DELETE 
     USING (user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid()));
 
+-- RLS Policies for staffs
+-- Shop owners can view staffs of their shops
+CREATE POLICY "Shop owners can view their staffs" 
+    ON public.staffs FOR SELECT 
+    USING (shop_id IN (SELECT id FROM public.shops WHERE user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())));
+
+-- Shop owners can insert staffs to their shops
+CREATE POLICY "Shop owners can insert staffs" 
+    ON public.staffs FOR INSERT 
+    WITH CHECK (shop_id IN (SELECT id FROM public.shops WHERE user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())));
+
+-- Shop owners can update staffs of their shops
+CREATE POLICY "Shop owners can update their staffs" 
+    ON public.staffs FOR UPDATE 
+    USING (shop_id IN (SELECT id FROM public.shops WHERE user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())));
+
+-- Shop owners can delete staffs from their shops
+CREATE POLICY "Shop owners can delete their staffs" 
+    ON public.staffs FOR DELETE 
+    USING (shop_id IN (SELECT id FROM public.shops WHERE user_id IN (SELECT id FROM public.users WHERE auth_id = auth.uid())));
+
 -- ============================================
 -- USER CREATION TRIGGER
 -- ============================================
@@ -158,6 +209,55 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================
+-- STAFF AUTHENTICATION FUNCTION
+-- ============================================
+
+-- Function to authenticate staff members
+CREATE OR REPLACE FUNCTION public.authenticate_staff(
+    p_username TEXT,
+    p_password TEXT,
+    p_shop_id UUID
+)
+RETURNS TABLE (
+    id UUID,
+    full_name TEXT,
+    username TEXT,
+    shop_id UUID,
+    shop_name TEXT,
+    phone TEXT,
+    profile_image_url TEXT,
+    status TEXT,
+    last_active TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        s.id,
+        s.full_name,
+        s.username,
+        s.shop_id,
+        sh.name as shop_name,
+        s.phone,
+        s.profile_image_url,
+        s.status,
+        s.last_active
+    FROM public.staffs s
+    INNER JOIN public.shops sh ON sh.id = s.shop_id
+    WHERE s.username = p_username 
+        AND s.password_hash = crypt(p_password, s.password_hash)
+        AND s.shop_id = p_shop_id
+        AND s.status = 'active';
+    
+    -- Update last_active for authenticated staff
+    IF FOUND THEN
+        UPDATE public.staffs 
+        SET last_active = NOW() 
+        WHERE username = p_username;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
 -- STORAGE BUCKET SETUP
@@ -242,7 +342,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 SELECT table_name 
 FROM information_schema.tables 
 WHERE table_schema = 'public' 
-AND table_name IN ('users', 'shops');
+AND table_name IN ('users', 'shops', 'staffs');
 
 -- Check if storage bucket was created
 SELECT 

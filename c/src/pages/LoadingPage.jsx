@@ -15,11 +15,11 @@ const LoadingPage = () => {
         </div>
 
         <h2 className="mt-6 text-xl font-semibold text-gray-700">
-          Loading your dashboard
+          Loading...
         </h2>
         <p className="mt-2 text-sm text-gray-500">
-          Please wait while we prepare your workspace...
-        </p>
+  Just a moment while we get things ready for you
+</p>
       </div>
     </div>
   );
